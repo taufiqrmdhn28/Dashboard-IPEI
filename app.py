@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import json
+import traceback  # <-- Modul baru untuk melacak pesan error yang disembunyikan server
 
 # -----------------------------------------------------------------------------
 # 1. KONFIGURASI HALAMAN
@@ -14,16 +15,17 @@ st.set_page_config(
 )
 
 # -----------------------------------------------------------------------------
-# 2. FUNGSI PEMUATAN DATA (CACHING) DENGAN PEMBERSIH JSON KETAT
+# 2. FUNGSI PEMUATAN DATA (CACHING) DENGAN PEMBERSIH JSON EKSTRA KETAT
 # -----------------------------------------------------------------------------
 @st.cache_data
 def load_data():
     # Load data Excel
     df = pd.read_excel("Data_Dummy_IPEI.xlsx")
     
-    # Bersihkan kodedaerah dari spasi atau format desimal (.0)
+    # 1. Pastikan kodedaerah bersih (tanpa spasi dan tanpa .0)
     df['kodedaerah'] = df['kodedaerah'].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
     
+    # 2. Konversi kolom nilai menjadi numerik paksa
     kolom_indikator = ['ipei', 'pilar1', 'pilar2', 'pilar3', 'sp11', 'sp12', 'sp13', 'sp21', 'sp22', 'sp31', 'sp32', 'sp33']
     for col in kolom_indikator:
         if col in df.columns:
@@ -33,22 +35,28 @@ def load_data():
     with open("38_Provinsi_Indonesia_Kabupaten_Adjusted.json", "r", encoding="utf-8") as f:
         geojson = json.load(f)
         
-    # INJEKSI ID: Buat daftar baru yang HANYA berisi wilayah valid
+    # 3. Sisir file JSON untuk memastikan strukturnya 100% aman untuk Plotly
     features_valid = []
     for feature in geojson.get('features', []):
-        # Pastikan wilayah tersebut punya koordinat (geometry) dan informasi (properties)
-        if feature.get('geometry') is not None and feature.get('properties') is not None:
-            kode = str(feature['properties'].get('kodedaerah_kabkota', '')).replace('.0', '').strip()
+        # Abaikan wilayah yang tidak memiliki koordinat bentuk (geometry)
+        if not feature.get('geometry'):
+            continue
             
-            # Jika kodenya valid (bukan kosong/None)
-            if kode and kode.lower() != 'none':
-                # Tempelkan kode langsung sebagai ID utama di root feature
-                feature['id'] = kode
-                features_valid.append(feature)
-    
-    # Timpa daftar wilayah yang lama dengan daftar yang sudah bersih
+        # Pastikan properties ada
+        if not isinstance(feature.get('properties'), dict):
+            feature['properties'] = {}
+            
+        # Ambil kode, bersihkan, dan pastikan selalu ada kodenya
+        kode_asli = feature['properties'].get('kodedaerah_kabkota', 'UNKNOWN')
+        if pd.isna(kode_asli) or kode_asli is None:
+            kode_asli = 'UNKNOWN'
+            
+        kode_bersih = str(kode_asli).replace('.0', '').strip()
+        feature['properties']['kodedaerah_kabkota'] = kode_bersih
+            
+        features_valid.append(feature)
+            
     geojson['features'] = features_valid
-            
     return df, geojson
 
 df, geojson = load_data()
@@ -71,11 +79,9 @@ if menu == "🏠 Halaman Utama (Peta IPEI)":
     st.title("Peta Indeks Pembangunan Ekonomi Inklusif (IPEI)")
     st.markdown("Pemetaan skor tingkat Kabupaten/Kota untuk evaluasi pembangunan makroekonomi wilayah.")
     
-    # KONTROL FILTER (TAHUN & INDIKATOR)
+    # KONTROL FILTER
     col1, col2 = st.columns(2)
-    
     with col1:
-        # Menampilkan HANYA tahun 2024 dan 2025
         tahun_tersedia = [2025, 2024]
         selected_year = st.selectbox("📅 Pilih Tahun:", tahun_tersedia)
         
@@ -92,50 +98,35 @@ if menu == "🏠 Halaman Utama (Peta IPEI)":
         selected_label = st.selectbox("🎯 Pilih Indikator yang Dipetakan:", list(indikator_dict.keys()))
         selected_kolom = indikator_dict[selected_label]
     
-    # Filter data berdasarkan tahun yang dipilih
-    df_filtered = df[df['tahun'].astype(int) == selected_year]
+    # Filter dan reset index untuk mencegah bug internal pandas/plotly
+    df_filtered = df[df['tahun'].astype(int) == selected_year].reset_index(drop=True)
     
-    # Validasi ketersediaan data
     if df_filtered.empty:
         st.warning(f"⚠️ Data untuk tahun {selected_year} tidak ditemukan di file Excel.")
     else:
-        # MEMBUAT PETA INTERAKTIF
-        fig_map = px.choropleth_mapbox(
-            df_filtered,
-            geojson=geojson,
-            locations='kodedaerah',           
-            # Parameter featureidkey DIHAPUS karena kita menggunakan ID standar
-            color=selected_kolom,             
-            color_continuous_scale="RdYlGn",  
-            mapbox_style="carto-positron",
-            zoom=4,
-            center={"lat": -0.789, "lon": 113.921}, 
-            opacity=0.8,
-            hover_name='namadaerah',
-            hover_data={
-                'kodedaerah': False, 
-                'ipei': True, 
-                'pilar1': True, 
-                'pilar2': True, 
-                'pilar3': True
-            },
-            labels={selected_kolom: selected_label}
-        )
-        
-        fig_map.update_layout(
-            margin={"r":0,"t":0,"l":0,"b":0},
-            coloraxis_colorbar=dict(
-                title="Nilai",
-                thicknessmode="pixels", thickness=15,
-                lenmode="pixels", len=300,
-                yanchor="top", y=1,
-                ticks="outside"
+        # MEMBUAT PETA DENGAN MODE DETEKTIF
+        try:
+            # Versi Minimalis: hover_data dan pengaturan warna dinonaktifkan sementara
+            fig_map = px.choropleth_mapbox(
+                df_filtered,
+                geojson=geojson,
+                locations='kodedaerah',           
+                featureidkey='properties.kodedaerah_kabkota',   
+                color=selected_kolom,             
+                color_continuous_scale="RdYlGn",  
+                mapbox_style="carto-positron",
+                zoom=4,
+                center={"lat": -0.789, "lon": 113.921}, 
+                opacity=0.8
             )
-        )
-        
-        # Tampilkan Peta
-        st.plotly_chart(fig_map, use_container_width=True)
-        st.info(f"Visualisasi menampilkan sebaran **{selected_label}** untuk tahun **{selected_year}**.")
+            
+            st.plotly_chart(fig_map, use_container_width=True)
+            st.success("✅ Peta berhasil dirender! Jika ini muncul, berarti error sebelumnya disebabkan oleh parameter tambahan (seperti hover_data).")
+            
+        except Exception as e:
+            st.error("🚨 GAGAL MERENDER PETA. BERIKUT ADALAH LOG ERROR ASLINYA:")
+            # Ini akan mencetak error merah asli ke layar Anda
+            st.code(traceback.format_exc())
 
 elif menu == "📈 Analisis Pilar & Tren":
     st.title("Analisis Tren dan Pilar Ekonomi Inklusif")
@@ -143,12 +134,10 @@ elif menu == "📈 Analisis Pilar & Tren":
     
     col1, col2 = st.columns(2)
     with col1:
-        # Hapus duplikat dan NaN dari daftar nama daerah
         daerah_list = df['namadaerah'].dropna().unique().tolist()
         daerah_list.sort()
         selected_daerah = st.selectbox("Pilih Kabupaten/Kota:", daerah_list)
     
-    # Filter data untuk daerah yang dipilih
     df_daerah = df[df['namadaerah'] == selected_daerah].sort_values('tahun')
     
     if not df_daerah.empty:
@@ -160,7 +149,6 @@ elif menu == "📈 Analisis Pilar & Tren":
             markers=True,
             title="Perkembangan Skor IPEI"
         )
-        # Paksa sumbu X agar menampilkan tahun tanpa koma (contoh: bukan 2,024 tapi 2024)
         fig_trend.update_xaxes(dtick=1) 
         st.plotly_chart(fig_trend, use_container_width=True)
         
@@ -198,6 +186,4 @@ elif menu == "ℹ️ Tentang IPEI":
     * **Pilar 1:** Pertumbuhan dan Perkembangan Ekonomi
     * **Pilar 2:** Kesetaraan dan Inklusi
     * **Pilar 3:** Kemiskinan dan Kondisi Pekerjaan
-    
-    *Dashboard ini dirancang untuk memfasilitasi analisis kebijakan dan pemantauan dinamika makroekonomi wilayah secara efisien.*
     """)
