@@ -126,45 +126,146 @@ tab_beranda, tab_tentang, tab_peta, tab_analisis = st.tabs([
 with tab_beranda:
     hero_html = """
     <style>
-    .hero-container {
-        background-image: linear-gradient(to right, rgba(13, 71, 161, 0.95), rgba(30, 136, 229, 0.4)), url('https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=2000&auto=format&fit=crop');
-        background-size: cover;
-        background-position: center;
-        border-radius: 12px;
-        padding: 100px 60px;
-        color: white;
-        min-height: 65vh; /* Membuat banner besar memakan layar */
+    .modern-hero {
         display: flex;
-        flex-direction: column;
-        justify-content: center;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        align-items: center;
+        justify-content: space-between;
+        /* Gradien biru muda yang sangat lembut untuk kesan bersih/elegan */
+        background: linear-gradient(135deg, #f4f9fc 0%, #e1eef7 100%);
+        padding: 60px 50px;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(11, 83, 148, 0.08);
+        margin-bottom: 20px;
+        gap: 40px;
+    }
+    .hero-content {
+        flex: 1;
+        max-width: 55%;
+    }
+    .hero-badge {
+        background-color: #ffffff;
+        color: #0b5394;
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 700;
+        display: inline-block;
+        margin-bottom: 20px;
+        border: 1px solid #dbeaf7;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        letter-spacing: 0.5px;
     }
     .hero-title {
-        font-size: 3.8rem;
+        color: #083c6b;
+        font-size: 3.2rem;
         font-weight: 800;
+        line-height: 1.15;
         margin-bottom: 25px;
-        line-height: 1.1;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
-    .hero-subtitle {
-        font-size: 1.3rem;
-        font-weight: 400;
-        max-width: 900px;
+    .hero-title span {
+        color: #2196f3; /* Biru terang untuk highlight kata */
+    }
+    .hero-desc {
+        color: #4a5568;
+        font-size: 1.15rem;
         line-height: 1.7;
-        opacity: 0.95;
+        margin-bottom: 35px;
+    }
+    .hero-buttons {
+        display: flex;
+        gap: 15px;
+    }
+    .btn-primary {
+        background-color: #0b5394;
+        color: white !important;
+        padding: 12px 28px;
+        border-radius: 30px;
+        font-weight: 600;
+        font-size: 1rem;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(11, 83, 148, 0.3);
+        cursor: default; /* Kursor default karena ini statis */
+    }
+    .btn-primary:hover {
+        background-color: #083c6b;
+        transform: translateY(-2px);
+    }
+    .btn-secondary {
+        background-color: transparent;
+        color: #0b5394 !important;
+        padding: 12px 28px;
+        border-radius: 30px;
+        font-weight: 600;
+        font-size: 1rem;
+        text-decoration: none;
+        border: 2px solid #0b5394;
+        transition: all 0.3s ease;
+        cursor: default;
+    }
+    .btn-secondary:hover {
+        background-color: #eaf3fa;
+        transform: translateY(-2px);
+    }
+    .hero-image-container {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        max-width: 45%;
+    }
+    .hero-image {
+        width: 100%;
+        max-width: 500px;
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        /* Efek 3D Tilt ala startup agar gambar tidak kaku */
+        transform: perspective(1000px) rotateY(-8deg);
+        transition: transform 0.5s ease;
+    }
+    .hero-image:hover {
+        transform: perspective(1000px) rotateY(0deg);
+    }
+    
+    /* Responsivitas untuk layar kecil */
+    @media (max-width: 900px) {
+        .modern-hero {
+            flex-direction: column;
+            padding: 40px 30px;
+        }
+        .hero-content, .hero-image-container {
+            max-width: 100%;
+        }
+        .hero-title {
+            font-size: 2.5rem;
+        }
+        .hero-image {
+            margin-top: 30px;
+            transform: none;
+        }
     }
     </style>
     
-    <div class="hero-container">
-        <div class="hero-title">Indeks Pembangunan Ekonomi Inklusif (IPEI)</div>
-        <div class="hero-subtitle">
-            Platform visualisasi interaktif untuk mengevaluasi pemerataan pembangunan dan inklusivitas makroekonomi daerah.<br><br>
-            Dasbor ini dirancang untuk mendukung penguatan <i>evidence-based planning</i> dalam pengembangan model pembangunan di seluruh wilayah Indonesia.
+    <div class="modern-hero">
+        <div class="hero-content">
+            <div class="hero-badge">Tim Data & Analisis Makro</div>
+            <div class="hero-title">Indeks Pembangunan Ekonomi Inklusif <span>(IPEI)</span></div>
+            <div class="hero-desc">
+                Tingkatkan evaluasi pembangunan makroekonomi daerah dengan analitik spasial yang komprehensif. Jaga fokus analisis strategis sekaligus wujudkan ekosistem pertumbuhan yang inklusif dan berwawasan lingkungan.
+            </div>
+            <div class="hero-buttons">
+                <div class="btn-primary">Mulai Eksplorasi Peta</div>
+                <div class="btn-secondary">Lihat Metodologi</div>
+            </div>
+        </div>
+        <div class="hero-image-container">
+            <!-- Gambar tema lingkungan resolusi tinggi dari Unsplash -->
+            <img src="https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=800&auto=format&fit=crop" class="hero-image" alt="Lingkungan Berkelanjutan">
         </div>
     </div>
     """
     st.markdown(hero_html, unsafe_allow_html=True)
-
 
 # =========================================================
 # ISI TAB: PETA IPEI
