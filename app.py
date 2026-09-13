@@ -59,10 +59,10 @@ def load_data():
 
     geojson_kabkota = {"type": "FeatureCollection", "features": fitur_kabkota}
 
-    # --- C. PROSES GEOPANDAS (DISSOLVE TANPA SIMPLIFY AGAR RAPI) ---
+    # --- C. PROSES GEOPANDAS (DISSOLVE) ---
     gdf_kab = gpd.GeoDataFrame.from_features(geojson_kabkota)
     
-    # Leburkan batas kabupaten menjadi provinsi (Bentuk asli tetap dipertahankan)
+    # Leburkan batas kabupaten menjadi provinsi
     gdf_prov = gdf_kab.dissolve(by='kode_provinsi').reset_index()
 
     geojson_prov_dict = json.loads(gdf_prov.to_json())
@@ -73,7 +73,7 @@ def load_data():
 
     return df_provinsi, df_kabkota, geojson_prov_dict, geojson_kab_dict, gdf_prov
 
-# Eksekusi Data (Hanya berjalan sekali saat loading awal)
+# Eksekusi Data
 df_provinsi, df_kabkota, geojson_provinsi, geojson_kabkota, gdf_provinsi = load_data()
 
 
@@ -131,23 +131,31 @@ if menu == "🏠 Halaman Utama (Peta IPEI)":
         df_prov_filtered = df_provinsi[df_provinsi['tahun'].astype(int) == selected_year].reset_index(drop=True)
 
         if not df_prov_filtered.empty:
-            fig_nasional = px.choropleth_mapbox(
-                df_prov_filtered,
-                geojson=geojson_provinsi, 
-                locations='kodedaerah',            
-                color=selected_kolom,              
-                color_continuous_scale="RdYlGn",  
-                mapbox_style="carto-positron",        
-                opacity=0.8,
-                hover_name='namadaerah',
-                labels={selected_kolom: selected_label}
-            )
-
-            fig_nasional.update_layout(
-                mapbox=dict(center={"lat": -0.789, "lon": 113.921}, zoom=4),
-                margin={"r":0,"t":0,"l":0,"b":0},
-                coloraxis_colorbar=dict(title="Nilai", yanchor="top", y=1, ticks="outside")
-            )
+            # 🎯 DETEKSI VERSI PLOTLY OTOMATIS
+            if hasattr(px, 'choropleth_map'):
+                fig_nasional = px.choropleth_map(
+                    df_prov_filtered, geojson=geojson_provinsi, locations='kodedaerah',            
+                    color=selected_kolom, color_continuous_scale="RdYlGn",  
+                    map_style="carto-positron", opacity=0.8, hover_name='namadaerah',
+                    labels={selected_kolom: selected_label}
+                )
+                fig_nasional.update_layout(
+                    map=dict(center={"lat": -0.789, "lon": 113.921}, zoom=4),
+                    margin={"r":0,"t":0,"l":0,"b":0},
+                    coloraxis_colorbar=dict(title="Nilai", yanchor="top", y=1, ticks="outside")
+                )
+            else:
+                fig_nasional = px.choropleth_mapbox(
+                    df_prov_filtered, geojson=geojson_provinsi, locations='kodedaerah',            
+                    color=selected_kolom, color_continuous_scale="RdYlGn",  
+                    mapbox_style="carto-positron", opacity=0.8, hover_name='namadaerah',
+                    labels={selected_kolom: selected_label}
+                )
+                fig_nasional.update_layout(
+                    mapbox=dict(center={"lat": -0.789, "lon": 113.921}, zoom=4),
+                    margin={"r":0,"t":0,"l":0,"b":0},
+                    coloraxis_colorbar=dict(title="Nilai", yanchor="top", y=1, ticks="outside")
+                )
 
             event = st.plotly_chart(fig_nasional, use_container_width=True, on_select="rerun", selection_mode="points", key="peta_awal")
             
@@ -169,45 +177,43 @@ if menu == "🏠 Halaman Utama (Peta IPEI)":
         if not df_kab_zoom.empty:
             st.markdown("### Detail Kabupaten/Kota")
 
-            fig_zoom = px.choropleth_mapbox(
-                df_kab_zoom,
-                geojson=geojson_kabkota, 
-                locations='kodedaerah',            
-                color=selected_kolom,              
-                color_continuous_scale="RdYlGn",  
-                mapbox_style="carto-positron",        
-                opacity=0.8,
-                hover_name='namadaerah',
-                labels={selected_kolom: selected_label}
-            )
-
-            # --- KALKULASI ZOOM DINAMIS YANG AMAN ---
+            # --- KALKULASI ZOOM DINAMIS ---
             batas_provinsi = gdf_provinsi[gdf_provinsi['kode_provinsi'] == st.session_state.provinsi_terpilih]
+            center_lat, center_lon, zoom_aman = -0.789, 113.921, 5 
+            
             if not batas_provinsi.empty:
                 minx, miny, maxx, maxy = batas_provinsi.total_bounds
-                
-                # 1. Tentukan titik tengah provinsi
                 center_lat = (miny + maxy) / 2
                 center_lon = (minx + maxx) / 2
-                
-                # 2. Hitung level zoom berdasarkan seberapa lebar/tinggi provinsinya
                 max_diff = max(maxx - minx, maxy - miny)
                 zoom_ideal = math.log2(360 / max_diff) + 1.2 if max_diff > 0 else 8
-                
-                # 3. Kunci zoom agar tidak lebih dekat dari level 9.5 (agar tidak polos seperti di gambar)
                 zoom_aman = max(4.0, min(zoom_ideal, 9.5))
-                
-                fig_zoom.update_layout(
-                    mapbox=dict(
-                        center={"lat": center_lat, "lon": center_lon},
-                        zoom=zoom_aman
-                    )
-                )
 
-            fig_zoom.update_layout(
-                margin={"r":0,"t":0,"l":0,"b":0},
-                coloraxis_colorbar=dict(title="Nilai", yanchor="top", y=1, ticks="outside")
-            )
+            # 🎯 DETEKSI VERSI PLOTLY OTOMATIS UNTUK ZOOM
+            if hasattr(px, 'choropleth_map'):
+                fig_zoom = px.choropleth_map(
+                    df_kab_zoom, geojson=geojson_kabkota, locations='kodedaerah',            
+                    color=selected_kolom, color_continuous_scale="RdYlGn",  
+                    map_style="carto-positron", opacity=0.8, hover_name='namadaerah',
+                    labels={selected_kolom: selected_label}
+                )
+                fig_zoom.update_layout(
+                    map=dict(center={"lat": center_lat, "lon": center_lon}, zoom=zoom_aman),
+                    margin={"r":0,"t":0,"l":0,"b":0},
+                    coloraxis_colorbar=dict(title="Nilai", yanchor="top", y=1, ticks="outside")
+                )
+            else:
+                fig_zoom = px.choropleth_mapbox(
+                    df_kab_zoom, geojson=geojson_kabkota, locations='kodedaerah',            
+                    color=selected_kolom, color_continuous_scale="RdYlGn",  
+                    mapbox_style="carto-positron", opacity=0.8, hover_name='namadaerah',
+                    labels={selected_kolom: selected_label}
+                )
+                fig_zoom.update_layout(
+                    mapbox=dict(center={"lat": center_lat, "lon": center_lon}, zoom=zoom_aman),
+                    margin={"r":0,"t":0,"l":0,"b":0},
+                    coloraxis_colorbar=dict(title="Nilai", yanchor="top", y=1, ticks="outside")
+                )
 
             st.plotly_chart(fig_zoom, use_container_width=True, key="peta_zoom")
 
