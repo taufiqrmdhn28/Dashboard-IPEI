@@ -113,7 +113,7 @@ except FileNotFoundError:
 # -----------------------------------------------------------------------------
 # 4. MENU NAVIGASI (MENGGUNAKAN NATIVE TABS STREAMLIT)
 # -----------------------------------------------------------------------------
-tab_beranda, tab_peta, tab_analisis, tab_tentang = st.tabs([
+tab_beranda, tab_tentang, tab_peta, tab_analisis = st.tabs([
     "Beranda",
     "Tentang IPEI",
     "Peta IPEI", 
