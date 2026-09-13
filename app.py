@@ -14,17 +14,17 @@ st.set_page_config(
 )
 
 # -----------------------------------------------------------------------------
-# 2. FUNGSI PEMUATAN DATA (PERBAIKAN STRUKTUR JSON & EXCEL)
+# 2. FUNGSI PEMUATAN DATA (PERBAIKAN EKSTRAKSI GEOMETRI JSON)
 # -----------------------------------------------------------------------------
 @st.cache_data
 def load_data():
     # 1. Load data Excel KHUSUS dari sheet "Kab_Kota"
     df = pd.read_excel("Data_Dummy_IPEI.xlsx", sheet_name="Kab_Kota")
 
-    # 2. Bersihkan kode daerah di Excel agar menjadi teks murni (contoh: "1101")
+    # 2. Bersihkan kode daerah di Excel
     df['kodedaerah'] = df['kodedaerah'].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
 
-    # 3. Paksa semua kolom indikator menjadi angka agar gradasi warna bisa bekerja
+    # 3. Paksa kolom indikator menjadi numerik
     kolom_indikator = ['ipei', 'pilar1', 'pilar2', 'pilar3', 'sp11', 'sp12', 'sp13', 'sp21', 'sp22', 'sp31', 'sp32', 'sp33']
     for col in kolom_indikator:
         if col in df.columns:
@@ -34,36 +34,51 @@ def load_data():
     with open("Peta_BPS_Kabupaten.json", "r", encoding="utf-8") as f:
         raw_data = json.load(f)
 
-    # 5. Transformasi format List menjadi GeoJSON FeatureCollection baku
+    # 5. Transformasi format
     geojson = {
         "type": "FeatureCollection",
         "features": []
     }
 
-    # Iterasi langsung karena raw_data adalah sebuah List
     for item in raw_data:
-        geom = item.get('coordinates')
-        if not geom:
+        geom_raw = item.get('coordinates')
+        if not geom_raw:
             continue
+            
+        # --- BAGIAN PERBAIKAN UTAMA: EKSTRAKSI GEOMETRI ASLI ---
+        try:
+            # Tahap 1: Ubah string JSON terluar menjadi dictionary
+            geom_dict = json.loads(geom_raw)
+            
+            # Tahap 2: Gali ke dalam 'features' untuk mengambil 'geometry'
+            if 'features' in geom_dict and len(geom_dict['features']) > 0:
+                geom_str = geom_dict['features'][0].get('geometry')
+                
+                # Tahap 3: Ubah lagi string di dalamnya menjadi dictionary geometri asli
+                actual_geom = json.loads(geom_str)
+            else:
+                continue
+        except Exception:
+            # Abaikan baris ini jika struktur koordinatnya rusak
+            continue
+        # --------------------------------------------------------
 
-        # PERBAIKAN: Gunakan 'code' untuk level Kabupaten/Kota, BUKAN 'adm1_code'
+        # Gunakan 'code' untuk level Kabupaten/Kota
         kode = str(item.get('code', '')).replace('.0', '').strip()
 
         if kode and kode.lower() != 'none':
-            # Rakit ulang menjadi Feature standar dengan injeksi ID
             feature = {
                 "type": "Feature",
                 "id": kode,
-                "properties": item,  # Simpan semua atribut asli di dalam properties
-                "geometry": geom
+                "properties": item,  
+                "geometry": actual_geom  # Masukkan geometri yang sudah bersih dan valid
             }
             geojson['features'].append(feature)
 
     return df, geojson
 
-# ---> PASTIKAN BARIS INI ADA, DAN POSISINYA PALING KIRI (TIDAK DI DALAM FUNGSI) <---
+# ---> PASTIKAN BARIS INI TETAP ADA (Jangan sampai terhapus atau menjorok ke dalam) <---
 df, geojson = load_data()
-
 # -----------------------------------------------------------------------------
 # 3. STRUKTUR MENU (SIDEBAR)
 # -----------------------------------------------------------------------------
