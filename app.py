@@ -83,7 +83,7 @@ df_provinsi, df_kabkota, geojson_provinsi, geojson_kabkota, gdf_provinsi = load_
 # -----------------------------------------------------------------------------
 st.markdown("""
     <style>
-        /* Sembunyikan elemen bawaan Streamlit (Header & Sidebar) */
+        /* Sembunyikan elemen bawaan Streamlit */
         [data-testid="collapsedControl"] {display: none;}
         #MainMenu {visibility: hidden;}
         header {visibility: hidden;}
@@ -92,10 +92,38 @@ st.markdown("""
             padding-bottom: 1rem;
             max-width: 95%;
         }
-        /* Perbesar ukuran teks Tab agar lebih proporsional */
+        
+        /* Mempercantik ukuran teks Tab agar rapi */
         button[data-baseweb="tab"] p {
             font-size: 1.15rem;
             font-weight: 600;
+        }
+        
+        /* Memaksa tombol utama (primary) menjadi warna Biru Bappenas */
+        button[kind="primary"] {
+            background-color: #0b5394 !important;
+            border-color: #0b5394 !important;
+            transition: all 0.3s ease;
+        }
+        button[kind="primary"]:hover {
+            background-color: #083c6b !important;
+            border-color: #083c6b !important;
+            transform: translateY(-2px);
+        }
+        
+        /* Animasi Mengambang (Floating) untuk Gambar 3D */
+        @keyframes float-animation {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+            100% { transform: translateY(0px); }
+        }
+        .floating-img {
+            width: 100%;
+            max-width: 650px;
+            animation: float-animation 4s ease-in-out infinite;
+            filter: drop-shadow(0px 15px 25px rgba(0,0,0,0.15));
+            display: block;
+            margin: auto;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -124,148 +152,63 @@ tab_beranda, tab_tentang, tab_peta, tab_analisis = st.tabs([
 # ISI TAB: BERANDA (FULL BANNER)
 # =========================================================
 with tab_beranda:
-    hero_html = """
-    <style>
-    .modern-hero {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        /* Gradien biru muda yang sangat lembut untuk kesan bersih/elegan */
-        background: linear-gradient(135deg, #f4f9fc 0%, #e1eef7 100%);
-        padding: 60px 50px;
-        border-radius: 20px;
-        box-shadow: 0 10px 30px rgba(11, 83, 148, 0.08);
-        margin-bottom: 20px;
-        gap: 40px;
-    }
-    .hero-content {
-        flex: 1;
-        max-width: 55%;
-    }
-    .hero-badge {
-        background-color: #ffffff;
-        color: #0b5394;
-        padding: 6px 16px;
-        border-radius: 20px;
-        font-size: 0.9rem;
-        font-weight: 700;
-        display: inline-block;
-        margin-bottom: 20px;
-        border: 1px solid #dbeaf7;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        letter-spacing: 0.5px;
-    }
-    .hero-title {
-        color: #083c6b;
-        font-size: 3.2rem;
-        font-weight: 800;
-        line-height: 1.15;
-        margin-bottom: 25px;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    .hero-title span {
-        color: #2196f3; /* Biru terang untuk highlight kata */
-    }
-    .hero-desc {
-        color: #4a5568;
-        font-size: 1.15rem;
-        line-height: 1.7;
-        margin-bottom: 35px;
-    }
-    .hero-buttons {
-        display: flex;
-        gap: 15px;
-    }
-    .btn-primary {
-        background-color: #0b5394;
-        color: white !important;
-        padding: 12px 28px;
-        border-radius: 30px;
-        font-weight: 600;
-        font-size: 1rem;
-        text-decoration: none;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(11, 83, 148, 0.3);
-        cursor: default; /* Kursor default karena ini statis */
-    }
-    .btn-primary:hover {
-        background-color: #083c6b;
-        transform: translateY(-2px);
-    }
-    .btn-secondary {
-        background-color: transparent;
-        color: #0b5394 !important;
-        padding: 12px 28px;
-        border-radius: 30px;
-        font-weight: 600;
-        font-size: 1rem;
-        text-decoration: none;
-        border: 2px solid #0b5394;
-        transition: all 0.3s ease;
-        cursor: default;
-    }
-    .btn-secondary:hover {
-        background-color: #eaf3fa;
-        transform: translateY(-2px);
-    }
-    .hero-image-container {
-        flex: 1;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        max-width: 45%;
-    }
-    .hero-image {
-        width: 100%;
-        max-width: 500px;
-        border-radius: 20px;
-        box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-        /* Efek 3D Tilt ala startup agar gambar tidak kaku */
-        transform: perspective(1000px) rotateY(-8deg);
-        transition: transform 0.5s ease;
-    }
-    .hero-image:hover {
-        transform: perspective(1000px) rotateY(0deg);
-    }
+    # Menggunakan st.columns agar ukurannya otomatis sama persis dengan batas tab (tidak melebar)
+    col_teks, col_gambar = st.columns([1.2, 1], gap="large")
     
-    /* Responsivitas untuk layar kecil */
-    @media (max-width: 900px) {
-        .modern-hero {
-            flex-direction: column;
-            padding: 40px 30px;
-        }
-        .hero-content, .hero-image-container {
-            max-width: 100%;
-        }
-        .hero-title {
-            font-size: 2.5rem;
-        }
-        .hero-image {
-            margin-top: 30px;
-            transform: none;
-        }
-    }
-    </style>
+    with col_teks:
+        st.markdown("<br><br>", unsafe_allow_html=True) # Spacer vertikal agar seimbang
+        st.markdown("""
+        <h1 style="color: #083c6b; font-size: 3.5rem; font-weight: 800; line-height: 1.2; margin-bottom: 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+            Indeks Pembangunan Ekonomi Inklusif <span style="color: #2196f3;">(IPEI)</span>
+        </h1>
+        <p style="color: #4a5568; font-size: 1.15rem; line-height: 1.7; margin-bottom: 30px;">
+            Tingkatkan evaluasi pembangunan makroekonomi daerah dengan analitik spasial yang komprehensif. Jaga fokus analisis strategis sekaligus wujudkan ekosistem pertumbuhan yang inklusif dan berwawasan lingkungan.
+        </p>
+        """, unsafe_allow_html=True)
+        
+        # Tombol Aksi
+        btn1, btn2, _ = st.columns([1.2, 1.2, 1]) # Kolom kosong di kanan agar tombol tidak terlalu panjang
+        
+        with btn1:
+            if st.button("Eksplorasi Peta", type="primary", use_container_width=True):
+                # Injeksi JS untuk langsung mengklik tab "Peta IPEI"
+                js = """
+                <script>
+                var tabs = window.parent.document.querySelectorAll('button[data-baseweb="tab"]');
+                for (var i=0; i<tabs.length; i++) {
+                    if (tabs[i].innerText.includes('Peta IPEI')) {
+                        tabs[i].click();
+                        break;
+                    }
+                }
+                </script>
+                """
+                st.components.v1.html(js, height=0)
+                
+        with btn2:
+            if st.button("Lihat Metadata", use_container_width=True):
+                # Injeksi JS untuk langsung mengklik tab "Metadata"
+                js = """
+                <script>
+                var tabs = window.parent.document.querySelectorAll('button[data-baseweb="tab"]');
+                for (var i=0; i<tabs.length; i++) {
+                    if (tabs[i].innerText.includes('Metadata')) {
+                        tabs[i].click();
+                        break;
+                    }
+                }
+                </script>
+                """
+                st.components.v1.html(js, height=0)
     
-    <div class="modern-hero">
-        <div class="hero-content">
-            <div class="hero-badge">Tim Data & Analisis Makro</div>
-            <div class="hero-title">Indeks Pembangunan Ekonomi Inklusif <span>(IPEI)</span></div>
-            <div class="hero-desc">
-                Tingkatkan evaluasi pembangunan makroekonomi daerah dengan analitik spasial yang komprehensif. Jaga fokus analisis strategis sekaligus wujudkan ekosistem pertumbuhan yang inklusif dan berwawasan lingkungan.
-            </div>
-            <div class="hero-buttons">
-                <div class="btn-primary">Mulai Eksplorasi Peta</div>
-                <div class="btn-secondary">Lihat Metodologi</div>
-            </div>
-        </div>
-        <div class="hero-image-container">
-            <!-- Gambar tema lingkungan resolusi tinggi dari Unsplash -->
-            <img src="https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=800&auto=format&fit=crop" class="hero-image" alt="Lingkungan Berkelanjutan">
-        </div>
-    </div>
-    """
-    st.markdown(hero_html, unsafe_allow_html=True)
+    with col_gambar:
+        # Menyisipkan gambar ipei_inklusif.png dengan CSS class untuk animasi melayang
+        try:
+            with open("ipei_inklusif.png", "rb") as img_file:
+                encoded_img = base64.b64encode(img_file.read()).decode()
+            st.markdown(f'<img src="data:image/png;base64,{encoded_img}" class="floating-img">', unsafe_allow_html=True)
+        except FileNotFoundError:
+            st.warning("⚠️ File 'ipei_inklusif.png' tidak ditemukan. Pastikan file ada di folder yang sama.")
 
 # =========================================================
 # ISI TAB: PETA IPEI
