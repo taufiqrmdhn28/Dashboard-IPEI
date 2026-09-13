@@ -14,17 +14,17 @@ st.set_page_config(
 )
 
 # -----------------------------------------------------------------------------
-# 2. FUNGSI PEMUATAN DATA (CACHING) 
+# 2. FUNGSI PEMUATAN DATA (TAKTIK INJEKSI ID)
 # -----------------------------------------------------------------------------
 @st.cache_data
 def load_data():
     # Load data Excel
     df = pd.read_excel("Data_Dummy_IPEI.xlsx")
     
-    # 1. Pastikan kodedaerah bersih (tanpa spasi dan tanpa .0)
+    # 1. Bersihkan kode daerah di Excel agar menjadi teks murni (contoh: "1101")
     df['kodedaerah'] = df['kodedaerah'].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
     
-    # 2. Konversi kolom nilai menjadi numerik paksa
+    # 2. Paksa semua kolom indikator menjadi angka agar gradasi warna bisa bekerja
     kolom_indikator = ['ipei', 'pilar1', 'pilar2', 'pilar3', 'sp11', 'sp12', 'sp13', 'sp21', 'sp22', 'sp31', 'sp32', 'sp33']
     for col in kolom_indikator:
         if col in df.columns:
@@ -34,21 +34,19 @@ def load_data():
     with open("38_Provinsi_Indonesia_Kabupaten_Adjusted.json", "r", encoding="utf-8") as f:
         geojson = json.load(f)
         
-    # 3. Sisir file JSON untuk memastikan strukturnya aman
+    # 3. INJEKSI ID: Tempelkan kode langsung sebagai 'id' utama di JSON
     features_valid = []
     for feature in geojson.get('features', []):
         if not feature.get('geometry'):
             continue
-        if not isinstance(feature.get('properties'), dict):
-            feature['properties'] = {}
             
-        kode_asli = feature['properties'].get('kodedaerah_kabkota', 'UNKNOWN')
-        if pd.isna(kode_asli) or kode_asli is None:
-            kode_asli = 'UNKNOWN'
-            
-        kode_bersih = str(kode_asli).replace('.0', '').strip()
-        feature['properties']['kodedaerah_kabkota'] = kode_bersih
-        features_valid.append(feature)
+        props = feature.get('properties', {})
+        # Ambil kodenya dan bersihkan
+        kode = str(props.get('kodedaerah_kabkota', '')).replace('.0', '').strip()
+        
+        if kode and kode.lower() != 'none':
+            feature['id'] = kode  # INI KUNCI UTAMANYA
+            features_valid.append(feature)
             
     geojson['features'] = features_valid
     return df, geojson
@@ -73,7 +71,6 @@ if menu == "🏠 Halaman Utama (Peta IPEI)":
     st.title("Peta Indeks Pembangunan Ekonomi Inklusif (IPEI)")
     st.markdown("Pemetaan skor tingkat Kabupaten/Kota untuk evaluasi pembangunan makroekonomi wilayah.")
     
-    # KONTROL FILTER
     col1, col2 = st.columns(2)
     with col1:
         tahun_tersedia = [2025, 2024]
@@ -97,15 +94,14 @@ if menu == "🏠 Halaman Utama (Peta IPEI)":
     if df_filtered.empty:
         st.warning(f"⚠️ Data untuk tahun {selected_year} tidak ditemukan di file Excel.")
     else:
-        # MENGGUNAKAN FUNGSI TERBARU: choropleth_map
+        # PETA SUDAH MENGGUNAKAN ID INJEKSI (Parameter featureidkey dihilangkan)
         fig_map = px.choropleth_map(
             df_filtered,
             geojson=geojson,
             locations='kodedaerah',           
-            featureidkey='properties.kodedaerah_kabkota',   
             color=selected_kolom,             
             color_continuous_scale="RdYlGn",  
-            map_style="carto-positron",       # GANTI DARI mapbox_style MENJADI map_style
+            map_style="carto-positron",       
             zoom=4,
             center={"lat": -0.789, "lon": 113.921}, 
             opacity=0.8,
@@ -133,6 +129,14 @@ if menu == "🏠 Halaman Utama (Peta IPEI)":
         
         st.plotly_chart(fig_map, use_container_width=True)
         st.info(f"Visualisasi menampilkan sebaran **{selected_label}** untuk tahun **{selected_year}**.")
+        
+        # --- FITUR DEBUGGING (CEK KECOCOKAN DATA) ---
+        with st.expander("🛠️ Cek Sinkronisasi Data (Jika Peta Masih Polos)"):
+            sampel_excel = df_filtered['kodedaerah'].head(5).tolist()
+            sampel_json = [f['id'] for f in geojson['features'][:5]]
+            st.write(f"**Contoh Kode di Excel:** {sampel_excel}")
+            st.write(f"**Contoh Kode di JSON:** {sampel_json}")
+            st.caption("Pastikan format kedua kode di atas sama persis (contoh: sama-sama '1101'). Jika beda, peta tidak akan berwarna.")
 
 elif menu == "📈 Analisis Pilar & Tren":
     st.title("Analisis Tren dan Pilar Ekonomi Inklusif")
