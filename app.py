@@ -135,21 +135,22 @@ if menu == "🏠 Halaman Utama (Peta IPEI)":
         df_prov_filtered = df_provinsi[df_provinsi['tahun'].astype(int) == selected_year].reset_index(drop=True)
 
         if not df_prov_filtered.empty:
-            fig_nasional = px.choropleth_map(
+            # PERBAIKAN: Menggunakan px.choropleth_mapbox dan mapbox_style
+            fig_nasional = px.choropleth_mapbox(
                 df_prov_filtered,
                 geojson=geojson_provinsi, 
                 locations='kodedaerah',            
                 color=selected_kolom,              
                 color_continuous_scale="RdYlGn",  
-                map_style="carto-positron",        
+                mapbox_style="carto-positron",        
                 opacity=0.8,
                 hover_name='namadaerah',
                 labels={selected_kolom: selected_label}
             )
 
-            # Atur posisi zoom default awal Indonesia
+            # PERBAIKAN: Menggunakan properti 'mapbox' bukan 'map'
             fig_nasional.update_layout(
-                map=dict(center={"lat": -0.789, "lon": 113.921}, zoom=4), # Mengatur tampilan awal
+                mapbox=dict(center={"lat": -0.789, "lon": 113.921}, zoom=4),
                 margin={"r":0,"t":0,"l":0,"b":0},
                 coloraxis_colorbar=dict(title="Nilai", yanchor="top", y=1, ticks="outside")
             )
@@ -174,27 +175,26 @@ if menu == "🏠 Halaman Utama (Peta IPEI)":
         if not df_kab_zoom.empty:
             st.markdown("### Detail Kabupaten/Kota")
 
-            fig_zoom = px.choropleth_map(
+            # PERBAIKAN: Menggunakan px.choropleth_mapbox dan mapbox_style
+            fig_zoom = px.choropleth_mapbox(
                 df_kab_zoom,
                 geojson=geojson_kabkota, 
                 locations='kodedaerah',            
                 color=selected_kolom,              
                 color_continuous_scale="RdYlGn",  
-                map_style="carto-positron",        
+                mapbox_style="carto-positron",        
                 opacity=0.8,
                 hover_name='namadaerah',
                 labels={selected_kolom: selected_label}
             )
 
-            # 🎯 KUNCI AUTO-ZOOM BARU: Hitung koordinat batas provinsi menggunakan Geopandas
             batas_provinsi = gdf_provinsi[gdf_provinsi['kode_provinsi'] == st.session_state.provinsi_terpilih]
             if not batas_provinsi.empty:
                 minx, miny, maxx, maxy = batas_provinsi.total_bounds
                 
-                # Paksa Plotly untuk zoom ke kotak koordinat provinsi tersebut
+                # PERBAIKAN: Hanya menggunakan properti 'mapbox' (menghapus properti 'map' yang ditolak server)
                 fig_zoom.update_layout(
-                    map=dict(bounds={"west": minx, "east": maxx, "south": miny, "north": maxy}),
-                    mapbox=dict(bounds={"west": minx, "east": maxx, "south": miny, "north": maxy}) # Untuk kompabilitas Plotly lama
+                    mapbox=dict(bounds={"west": minx, "east": maxx, "south": miny, "north": maxy})
                 )
 
             fig_zoom.update_layout(
