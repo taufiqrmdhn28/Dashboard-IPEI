@@ -87,27 +87,61 @@ df_provinsi, df_kabkota, geojson_provinsi, geojson_kabkota, gdf_provinsi = load_
 
 
 # -----------------------------------------------------------------------------
-# 3. STRUKTUR MENU (SIDEBAR)
+# 3. KUSTOMISASI CSS & HEADER (MENGGANTIKAN SIDEBAR)
 # -----------------------------------------------------------------------------
-st.sidebar.title("Navigasi Dashboard")
-st.sidebar.markdown("---")
-menu = st.sidebar.radio(
-    "Pilih Halaman:",
-    ("🏠 Beranda", "🗺️ Peta IPEI", "📈 Analisis Pilar & Tren", "ℹ️ Tentang IPEI")
-)
+# Menyembunyikan elemen bawaan Streamlit
+st.markdown("""
+    <style>
+        [data-testid="collapsedControl"] {display: none;}
+        #MainMenu {visibility: hidden;}
+        header {visibility: hidden;}
+        .block-container {
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+# Membuat Header Khusus: Kolom kiri untuk logo, kolom kanan untuk navigasi
+col_logo, col_menu = st.columns([1, 4])
+
+with col_logo:
+    # Menggunakan HTML untuk memanggil logo agar ukurannya lebih mudah diatur
+    # Pastikan file logo_bappenas.png berada di folder yang sama
+    try:
+        import base64
+        with open("logo_bappenas.png", "rb") as image_file:
+            encoded_string = base64.b64encode(image_file.read()).decode()
+        st.markdown(f'<img src="data:image/png;base64,{encoded_string}" width="220" style="margin-top: 5px;">', unsafe_allow_html=True)
+    except FileNotFoundError:
+        st.markdown("**Kementerian PPN/Bappenas**")
+
+with col_menu:
+    menu = st.radio(
+        "",
+        ("🏠 Beranda", "🗺️ Peta IPEI", "📈 Analisis Pilar & Tren", "ℹ️ Tentang IPEI"),
+        horizontal=True,
+        label_visibility="collapsed"
+    )
+
+st.markdown("---")
 
 
 # -----------------------------------------------------------------------------
 # 4. KONTEN HALAMAN
 # -----------------------------------------------------------------------------
+
+# =========================================================
+# HALAMAN BERANDA
+# =========================================================
 if menu == "🏠 Beranda":
     
     # Gunakan HTML dan CSS untuk membuat Hero Banner yang elegan
     hero_html = """
     <style>
     .hero-container {
-        /* Gradien biru transparan dipadukan dengan gambar latar (link gambar bisa diganti) */
-        background-image: linear-gradient(to right, rgba(10, 54, 104, 0.95), rgba(30, 136, 229, 0.4)), url('https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=2000&auto=format&fit=crop');
+        /* Gradien biru transparan dipadukan dengan gambar latar */
+        background-image: linear-gradient(to right, rgba(10, 54, 104, 0.95), rgba(30, 136, 229, 0.6)), url('https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=2000&auto=format&fit=crop');
         background-size: cover;
         background-position: center;
         border-radius: 15px;
@@ -141,10 +175,8 @@ if menu == "🏠 Beranda":
     </div>
     """
     
-    # Menampilkan banner di Streamlit
     st.markdown(hero_html, unsafe_allow_html=True)
     
-    # Menambahkan kartu fitur di bawah banner agar terlihat lebih padat
     st.markdown("### 📌 Fitur Utama Dasbor")
     c1, c2, c3 = st.columns(3)
     with c1:
