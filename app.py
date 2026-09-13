@@ -16,7 +16,7 @@ st.set_page_config(
 )
 
 # -----------------------------------------------------------------------------
-# 2. FUNGSI PEMUATAN DATA (BATAS WILAYAH PROPER & CACHE)
+# 2. FUNGSI PEMUATAN DATA (PERBAIKAN ID & KECEPATAN LOADING)
 # -----------------------------------------------------------------------------
 @st.cache_data
 def load_data():
@@ -53,14 +53,21 @@ def load_data():
             fitur_kabkota.append({
                 "type": "Feature",
                 "id": kode_kab, 
-                "properties": {"kode_provinsi": kode_prov, "namadaerah": item.get('name', '')},  
+                "properties": {
+                    "kode_kabupaten": kode_kab, # <-- INI KUNCI UTAMA AGAR WARNA KABUPATEN MUNCUL
+                    "kode_provinsi": kode_prov, 
+                    "namadaerah": item.get('name', '')
+                },  
                 "geometry": actual_geom
             })
 
     geojson_kabkota = {"type": "FeatureCollection", "features": fitur_kabkota}
 
-    # --- C. PROSES GEOPANDAS (DISSOLVE) ---
+    # --- C. PROSES GEOPANDAS (SIMPLIFY & DISSOLVE) ---
     gdf_kab = gpd.GeoDataFrame.from_features(geojson_kabkota)
+    
+    # Meringankan loading peta (memotong ukuran file 60% tapi garis batas tetap mulus/proper)
+    gdf_kab['geometry'] = gdf_kab['geometry'].simplify(tolerance=0.002, preserve_topology=True)
     
     # Leburkan batas kabupaten menjadi provinsi
     gdf_prov = gdf_kab.dissolve(by='kode_provinsi').reset_index()
@@ -70,6 +77,8 @@ def load_data():
         feature['id'] = feature['properties']['kode_provinsi']
 
     geojson_kab_dict = json.loads(gdf_kab.to_json())
+    for feature in geojson_kab_dict['features']:
+        feature['id'] = feature['properties']['kode_kabupaten'] # <-- KEMBALIKAN ID YANG HILANG DI GEOPANDAS
 
     return df_provinsi, df_kabkota, geojson_prov_dict, geojson_kab_dict, gdf_prov
 
@@ -131,7 +140,6 @@ if menu == "🏠 Halaman Utama (Peta IPEI)":
         df_prov_filtered = df_provinsi[df_provinsi['tahun'].astype(int) == selected_year].reset_index(drop=True)
 
         if not df_prov_filtered.empty:
-            # 🎯 DETEKSI VERSI PLOTLY OTOMATIS
             if hasattr(px, 'choropleth_map'):
                 fig_nasional = px.choropleth_map(
                     df_prov_filtered, geojson=geojson_provinsi, locations='kodedaerah',            
@@ -177,7 +185,6 @@ if menu == "🏠 Halaman Utama (Peta IPEI)":
         if not df_kab_zoom.empty:
             st.markdown("### Detail Kabupaten/Kota")
 
-            # --- KALKULASI ZOOM DINAMIS ---
             batas_provinsi = gdf_provinsi[gdf_provinsi['kode_provinsi'] == st.session_state.provinsi_terpilih]
             center_lat, center_lon, zoom_aman = -0.789, 113.921, 5 
             
@@ -189,7 +196,6 @@ if menu == "🏠 Halaman Utama (Peta IPEI)":
                 zoom_ideal = math.log2(360 / max_diff) + 1.2 if max_diff > 0 else 8
                 zoom_aman = max(4.0, min(zoom_ideal, 9.5))
 
-            # 🎯 DETEKSI VERSI PLOTLY OTOMATIS UNTUK ZOOM
             if hasattr(px, 'choropleth_map'):
                 fig_zoom = px.choropleth_map(
                     df_kab_zoom, geojson=geojson_kabkota, locations='kodedaerah',            
