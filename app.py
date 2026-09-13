@@ -337,6 +337,42 @@ with tab_tentang:
         margin-bottom: 0;
         opacity: 0.95;
     }
+    .card-container {
+        background-color: #ffffff;
+        border-radius: 12px;
+        padding: 25px 20px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+        border: 1px solid #f0f2f6;
+        height: 100%;
+        transition: transform 0.3s ease;
+    }
+    .card-container:hover {
+        transform: translateY(-5px);
+    }
+    .card-title {
+        color: #0b5394;
+        font-size: 1.25em;
+        font-weight: 700;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #f0f2f6;
+        padding-bottom: 12px;
+        line-height: 1.4;
+    }
+    .sub-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 12px;
+        font-size: 1.05em;
+        color: #444444;
+        font-weight: 500;
+    }
+    .sub-icon {
+        margin-right: 12px;
+        font-size: 1.3em;
+        background-color: #f0f8ff;
+        padding: 5px;
+        border-radius: 8px;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -348,3 +384,38 @@ with tab_tentang:
         </div>
     </div>
     """, unsafe_allow_html=True)
+
+    st.markdown("### Komponen Pembentuk IPEI")
+    st.markdown("Struktur penilaian IPEI didasarkan pada **3 (tiga) pilar utama** dan **8 (delapan) sub-pilar** penggerak, yaitu:")
+    st.write("") 
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.markdown("""
+        <div class="card-container">
+            <div class="card-title">Pilar 1:<br>Pertumbuhan & Perkembangan Ekonomi</div>
+            <div class="sub-item"><span class="sub-icon">📊</span> Sub-Pilar 1.1: Pertumbuhan Ekonomi</div>
+            <div class="sub-item"><span class="sub-icon">💼</span> Sub-Pilar 1.2: Kesempatan Kerja</div>
+            <div class="sub-item"><span class="sub-icon">🏗️</span> Sub-Pilar 1.3: Infrastruktur</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col2:
+        st.markdown("""
+        <div class="card-container">
+            <div class="card-title">Pilar 2:<br>Pemerataan Pendapatan & Pengurangan Kemiskinan</div>
+            <div class="sub-item"><span class="sub-icon">📉</span> Sub-Pilar 2.1: Ketimpangan</div>
+            <div class="sub-item"><span class="sub-icon">🛡️</span> Sub-Pilar 2.2: Kemiskinan</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col3:
+        st.markdown("""
+        <div class="card-container">
+            <div class="card-title">Pilar 3:<br>Perluasan Akses & Kesempatan</div>
+            <div class="sub-item"><span class="sub-icon">🎓</span> Sub-Pilar 3.1: Kapabilitas Manusia</div>
+            <div class="sub-item"><span class="sub-icon">🏥</span> Sub-Pilar 3.2: Infrastruktur Dasar</div>
+            <div class="sub-item"><span class="sub-icon">💳</span> Sub-Pilar 3.3: Keuangan Inklusif</div>
+        </div>
+        """, unsafe_allow_html=True)
