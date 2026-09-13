@@ -55,72 +55,80 @@ if menu == "🏠 Halaman Utama (Peta IPEI)":
     col1, col2 = st.columns(2)
     
     with col1:
-        tahun_list = df['tahun'].unique().tolist()
-        tahun_list.sort(reverse=True)
-        selected_year = st.selectbox("📅 Pilih Tahun:", tahun_list)
+        # Menampilkan HANYA tahun 2024 dan 2025 secara statis sesuai permintaan
+        tahun_tersedia = [2025, 2024]
+        selected_year = st.selectbox("📅 Pilih Tahun:", tahun_tersedia)
         
     with col2:
-        # Dictionary untuk memetakan nama menu dengan nama kolom di Excel Anda
         indikator_dict = {
             "Skor Total IPEI": "ipei",
             "Pilar 1: Pertumbuhan dan Perkembangan Ekonomi": "pilar1",
             "Pilar 2: Kesetaraan dan Inklusi": "pilar2",
             "Pilar 3: Kemiskinan dan Kondisi Pekerjaan": "pilar3",
-            "Sub-Pilar 1.1": "sp11",
-            "Sub-Pilar 1.2": "sp12",
-            "Sub-Pilar 1.3": "sp13",
-            "Sub-Pilar 2.1": "sp21",
-            "Sub-Pilar 2.2": "sp22",
-            "Sub-Pilar 3.1": "sp31",
-            "Sub-Pilar 3.2": "sp32",
-            "Sub-Pilar 3.3": "sp33"
+            "Sub-Pilar 1.1": "sp11", "Sub-Pilar 1.2": "sp12", "Sub-Pilar 1.3": "sp13",
+            "Sub-Pilar 2.1": "sp21", "Sub-Pilar 2.2": "sp22",
+            "Sub-Pilar 3.1": "sp31", "Sub-Pilar 3.2": "sp32", "Sub-Pilar 3.3": "sp33"
         }
         selected_label = st.selectbox("🎯 Pilih Indikator yang Dipetakan:", list(indikator_dict.keys()))
         selected_kolom = indikator_dict[selected_label]
     
     # Filter data berdasarkan tahun yang dipilih
-    df_filtered = df[df['tahun'] == selected_year]
+    # Memastikan tipe data dicocokkan sebagai integer
+    df_filtered = df[df['tahun'].astype(int) == selected_year]
     
-    # 2. MEMBUAT PETA INTERAKTIF DENGAN PLOTLY
-    fig_map = px.choropleth_mapbox(
-        df_filtered,
-        geojson=geojson,
-        locations='kodedaerah',           
-        featureidkey='properties.KODE',   # PASTIKAN SESUAI DENGAN JSON ANDA (misal: properties.WADMKK)
-        color=selected_kolom,             # Variabel warna sekarang dinamis menyesuaikan pilihan user
-        color_continuous_scale="RdYlGn",  # Skala warna Merah -> Kuning -> Hijau seperti di gambar
-        mapbox_style="carto-positron",
-        zoom=4,
-        center={"lat": -0.789, "lon": 113.921}, 
-        opacity=0.8,
-        hover_name='namadaerah',
-        # Menampilkan detail saat kursor diarahkan ke area peta
-        hover_data={
-            'kodedaerah': False, 
-            'ipei': True, 
-            'pilar1': True, 
-            'pilar2': True, 
-            'pilar3': True
-        },
-        labels={selected_kolom: selected_label}
-    )
-    
-    fig_map.update_layout(
-        margin={"r":0,"t":0,"l":0,"b":0},
-        coloraxis_colorbar=dict(
-            title="Nilai",
-            thicknessmode="pixels", thickness=15,
-            lenmode="pixels", len=300,
-            yanchor="top", y=1,
-            ticks="outside"
-        )
-    )
-    
-    # Tampilkan Peta
-    st.plotly_chart(fig_map, use_container_width=True)
-    
-    # Menampilkan sedikit ringkasan data di bawah peta
-    st.info(f"Visualisasi menampilkan sebaran **{selected_label}** untuk tahun **{selected_year}**.")
+    # Validasi apakah data untuk tahun tersebut tersedia
+    if df_filtered.empty:
+        st.warning(f"⚠️ Data untuk tahun {selected_year} tidak ditemukan di file Excel. Pastikan data sudah tersedia.")
+    else:
+        try:
+            # 2. MEMBUAT PETA INTERAKTIF DENGAN PLOTLY
+            fig_map = px.choropleth_mapbox(
+                df_filtered,
+                geojson=geojson,
+                locations='kodedaerah',           
+                featureidkey='properties.KODE',   # -> CEK CATATAN DI BAWAH JIKA MASIH ERROR
+                color=selected_kolom,             
+                color_continuous_scale="RdYlGn",  
+                mapbox_style="carto-positron",
+                zoom=4,
+                center={"lat": -0.789, "lon": 113.921}, 
+                opacity=0.8,
+                hover_name='namadaerah',
+                hover_data={
+                    'kodedaerah': False, 
+                    'ipei': True, 
+                    'pilar1': True, 
+                    'pilar2': True, 
+                    'pilar3': True
+                },
+                labels={selected_kolom: selected_label}
+            )
+            
+            fig_map.update_layout(
+                margin={"r":0,"t":0,"l":0,"b":0},
+                coloraxis_colorbar=dict(
+                    title="Nilai",
+                    thicknessmode="pixels", thickness=15,
+                    lenmode="pixels", len=300,
+                    yanchor="top", y=1,
+                    ticks="outside"
+                )
+            )
+            
+            # Tampilkan Peta
+            st.plotly_chart(fig_map, use_container_width=True)
+            st.info(f"Visualisasi menampilkan sebaran **{selected_label}** untuk tahun **{selected_year}**.")
+            
+        except AttributeError:
+            st.error("Terjadi AttributeError pada perenderan peta.")
+            st.markdown("""
+            **Tindakan Perbaikan:**
+            1. Periksa file `38_Provinsi_Indonesia_Kabupaten_Adjusted.json` Anda (buka menggunakan Notepad/VS Code).
+            2. Cari struktur `"properties": { ... }`.
+            3. Pastikan atribut kode daerahnya benar-benar bernama `"KODE"`. Jika di JSON namanya adalah `"WADMKK"` atau `"KABKOT"`, maka ubah baris `featureidkey='properties.KODE'` di skrip `app.py` menjadi `featureidkey='properties.WADMKK'` (sesuaikan dengan nama aslinya).
+            """)
+        except Exception as e:
+            st.error(f"Terjadi kesalahan sistem: {e}")
 
 elif menu == "📈 Analisis Pilar & Tren":
     st.title("Analisis Tren dan Pilar Ekonomi Inklusif")
