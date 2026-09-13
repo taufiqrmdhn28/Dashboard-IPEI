@@ -102,14 +102,23 @@ menu = st.sidebar.radio(
 
 if menu == "🏠 Halaman Utama (Peta IPEI)":
     st.title("Peta Indeks Pembangunan Ekonomi Inklusif (IPEI)")
-    st.markdown("Pemetaan skor tingkat Kabupaten/Kota untuk evaluasi pembangunan makroekonomi wilayah.")
-    
-    # [BARU] Layout diubah menjadi 3 Kolom
-    col1, col2, col3 = st.columns(3)
+    st.markdown("Pemetaan skor tingkat wilayah untuk evaluasi pembangunan makroekonomi.")
+
+    # --- INISIALISASI SESSION STATE UNTUK KLIK PETA ---
+    if "tingkat_peta" not in st.session_state:
+        st.session_state.tingkat_peta = "nasional"
+        st.session_state.provinsi_terpilih = None
+
+    def reset_peta():
+        st.session_state.tingkat_peta = "nasional"
+        st.session_state.provinsi_terpilih = None
+
+    # --- FILTER TAHUN DAN INDIKATOR ---
+    col1, col2 = st.columns(2)
     with col1:
         tahun_tersedia = [2025, 2024]
         selected_year = st.selectbox("📅 Pilih Tahun:", tahun_tersedia)
-        
+
     with col2:
         indikator_dict = {
             "Skor Total IPEI": "ipei",
@@ -123,60 +132,80 @@ if menu == "🏠 Halaman Utama (Peta IPEI)":
         selected_label = st.selectbox("🎯 Pilih Indikator yang Dipetakan:", list(indikator_dict.keys()))
         selected_kolom = indikator_dict[selected_label]
 
-    with col3:
-        # [BARU] Filter Wilayah untuk Auto-Zoom
-        list_prov = ["Semua Provinsi (Nasional)"] + sorted(df['nama_provinsi'].dropna().unique().tolist())
-        selected_prov = st.selectbox("📍 Fokus Wilayah (Zoom):", list_prov)
-    
-    # [BARU] Logika Filtering Data Berdasarkan Tahun & Provinsi
-    df_filtered = df[df['tahun'].astype(int) == selected_year].reset_index(drop=True)
-    
-    if selected_prov != "Semua Provinsi (Nasional)":
-        df_filtered = df_filtered[df_filtered['nama_provinsi'] == selected_prov].reset_index(drop=True)
-    
-    if df_filtered.empty:
-        st.warning(f"⚠️ Data untuk tahun {selected_year} di wilayah {selected_prov} tidak ditemukan.")
-    else:
-        fig_map = px.choropleth_map(
-            df_filtered,
-            geojson=geojson,
-            locations='kodedaerah',            
-            color=selected_kolom,              
-            color_continuous_scale="RdYlGn",  
-            map_style="carto-positron",        
-            opacity=0.8,
-            hover_name='namadaerah',
-            hover_data={
-                'kodedaerah': False, 
-                'ipei': True, 
-                'pilar1': True, 
-                'pilar2': True, 
-                'pilar3': True
-            },
-            labels={selected_kolom: selected_label}
-        )
+
+    # =========================================================
+    # LOGIKA 1: TAMPILAN AWAL (PETA NASIONAL DENGAN BATAS PROVINSI)
+    # =========================================================
+    if st.session_state.tingkat_peta == "nasional":
+        st.info("💡 **Petunjuk:** Klik pada salah satu area Provinsi di peta untuk melihat detail Kabupaten/Kota di dalamnya.")
         
-        # [BARU] Logika Auto-Zoom (fitbounds)
-        if selected_prov != "Semua Provinsi (Nasional)":
-            fig_map.update_geos(fitbounds="locations", visible=False)
-        else:
-            fig_map.update_layout(
-                map=dict(center={"lat": -0.789, "lon": 113.921}, zoom=4)
+        # Filter data provinsi (Pastikan kamu sudah membuat df_provinsi di load_data)
+        df_prov_filtered = df_provinsi[df_provinsi['tahun'].astype(int) == selected_year].reset_index(drop=True)
+
+        if not df_prov_filtered.empty:
+            fig_nasional = px.choropleth_map(
+                df_prov_filtered,
+                geojson=geojson_provinsi, # Pastikan variabel ini memuat JSON Provinsi
+                locations='kodedaerah',            
+                color=selected_kolom,              
+                color_continuous_scale="RdYlGn",  
+                map_style="carto-positron",        
+                zoom=4,
+                center={"lat": -0.789, "lon": 113.921}, 
+                opacity=0.8,
+                hover_name='namadaerah',
+                labels={selected_kolom: selected_label}
             )
+
+            fig_nasional.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
+
+            # Tampilkan peta dan tangkap event klik dengan on_select="rerun"
+            event = st.plotly_chart(fig_nasional, use_container_width=True, on_select="rerun", selection_mode="points", key="peta_awal")
             
-        fig_map.update_layout(
-            margin={"r":0,"t":0,"l":0,"b":0},
-            coloraxis_colorbar=dict(
-                title="Nilai",
-                thicknessmode="pixels", thickness=15,
-                lenmode="pixels", len=300,
-                yanchor="top", y=1,
-                ticks="outside"
-            )
-        )
+            # Jika ada provinsi yang diklik, proses id-nya
+            if event and event.get("selection") and event["selection"].get("points"):
+                kode_prov_diklik = event["selection"]["points"][0]["location"]
+                
+                # Simpan ke session state dan muat ulang halaman
+                st.session_state.provinsi_terpilih = kode_prov_diklik
+                st.session_state.tingkat_peta = "provinsi"
+                st.rerun()
+
+    # =========================================================
+    # LOGIKA 2: TAMPILAN ZOOM (PETA KABUPATEN DI DALAM 1 PROVINSI)
+    # =========================================================
+    elif st.session_state.tingkat_peta == "provinsi":
+        st.button("⬅️ Kembali ke Peta Nasional", on_click=reset_peta)
         
-        st.plotly_chart(fig_map, use_container_width=True)
-        st.info(f"Visualisasi menampilkan sebaran **{selected_label}** untuk wilayah **{selected_prov}** (Tahun {selected_year}).")
+        # Filter data kabupaten untuk tahun terpilih
+        df_kab_filtered = df_kabkota[df_kabkota['tahun'].astype(int) == selected_year].copy()
+        
+        # Ekstrak 2 digit pertama dari kode kabupaten untuk mencocokkan dengan kode provinsi
+        df_kab_filtered['kode_prov'] = df_kab_filtered['kodedaerah'].astype(str).str[:2] + "00"
+        
+        # Saring hanya kabupaten yang berada di provinsi yang diklik
+        df_kab_zoom = df_kab_filtered[df_kab_filtered['kode_prov'] == str(st.session_state.provinsi_terpilih)].reset_index(drop=True)
+        
+        if not df_kab_zoom.empty:
+            fig_zoom = px.choropleth_map(
+                df_kab_zoom,
+                geojson=geojson_kabkota, # Pastikan variabel ini memuat JSON Kabupaten
+                locations='kodedaerah',            
+                color=selected_kolom,              
+                color_continuous_scale="RdYlGn",  
+                map_style="carto-positron",        
+                opacity=0.8,
+                hover_name='namadaerah',
+                labels={selected_kolom: selected_label}
+            )
+
+            # Fitur Auto-Zoom berdasarkan lokasi yang difilter
+            fig_zoom.update_geos(fitbounds="locations", visible=False)
+            fig_zoom.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
+
+            st.plotly_chart(fig_zoom, use_container_width=True, key="peta_zoom")
+        else:
+            st.warning("Data Kabupaten/Kota untuk Provinsi ini belum tersedia.")
 
 elif menu == "📈 Analisis Pilar & Tren":
     st.title("Analisis Tren dan Pilar Ekonomi Inklusif")
