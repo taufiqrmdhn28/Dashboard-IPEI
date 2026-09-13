@@ -14,41 +14,41 @@ st.set_page_config(
 )
 
 # -----------------------------------------------------------------------------
-# 2. FUNGSI PEMUATAN DATA (PERBAIKAN STRUKTUR JSON)
+# 2. FUNGSI PEMUATAN DATA (PERBAIKAN STRUKTUR JSON & EXCEL)
 # -----------------------------------------------------------------------------
 @st.cache_data
 def load_data():
-    # Load data Excel
-    df = pd.read_excel("Data_Dummy_IPEI.xlsx")
-    
-    # 1. Bersihkan kode daerah di Excel agar menjadi teks murni (contoh: "1101")
+    # 1. Load data Excel KHUSUS dari sheet "Kab_Kota"
+    df = pd.read_excel("Data_Dummy_IPEI.xlsx", sheet_name="Kab_Kota")
+
+    # 2. Bersihkan kode daerah di Excel agar menjadi teks murni (contoh: "1101")
     df['kodedaerah'] = df['kodedaerah'].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
-    
-    # 2. Paksa semua kolom indikator menjadi angka agar gradasi warna bisa bekerja
+
+    # 3. Paksa semua kolom indikator menjadi angka agar gradasi warna bisa bekerja
     kolom_indikator = ['ipei', 'pilar1', 'pilar2', 'pilar3', 'sp11', 'sp12', 'sp13', 'sp21', 'sp22', 'sp31', 'sp32', 'sp33']
     for col in kolom_indikator:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors='coerce')
-    
-    # 3. Load file Peta BPS
+
+    # 4. Load file Peta BPS
     with open("Peta_BPS_Kabupaten.json", "r", encoding="utf-8") as f:
         raw_data = json.load(f)
-        
-    # 4. Transformasi format List menjadi GeoJSON FeatureCollection baku
+
+    # 5. Transformasi format List menjadi GeoJSON FeatureCollection baku
     geojson = {
         "type": "FeatureCollection",
         "features": []
     }
-    
+
     # Iterasi langsung karena raw_data adalah sebuah List
     for item in raw_data:
         geom = item.get('coordinates')
         if not geom:
             continue
-            
-        # Menggunakan 'adm1_code' sesuai instruksi
-        kode = str(item.get('adm1_code', '')).replace('.0', '').strip()
-        
+
+        # PERBAIKAN: Gunakan 'code' untuk level Kabupaten/Kota, BUKAN 'adm1_code'
+        kode = str(item.get('code', '')).replace('.0', '').strip()
+
         if kode and kode.lower() != 'none':
             # Rakit ulang menjadi Feature standar dengan injeksi ID
             feature = {
@@ -58,10 +58,8 @@ def load_data():
                 "geometry": geom
             }
             geojson['features'].append(feature)
-            
-    return df, geojson
 
-df, geojson = load_data()
+    return df, geojson
 
 # -----------------------------------------------------------------------------
 # 3. STRUKTUR MENU (SIDEBAR)
