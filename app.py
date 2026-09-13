@@ -49,38 +49,78 @@ menu = st.sidebar.radio(
 
 if menu == "🏠 Halaman Utama (Peta IPEI)":
     st.title("Peta Indeks Pembangunan Ekonomi Inklusif (IPEI)")
-    st.markdown("Pemetaan skor IPEI tingkat Kabupaten/Kota untuk evaluasi pembangunan makroekonomi wilayah.")
+    st.markdown("Pemetaan skor tingkat Kabupaten/Kota untuk evaluasi pembangunan makroekonomi wilayah.")
     
-    # Filter Tahun
-    tahun_list = df['tahun'].unique().tolist()
-    tahun_list.sort(reverse=True)
-    selected_year = st.selectbox("Pilih Tahun:", tahun_list)
+    # 1. KONTROL FILTER (TAHUN & INDIKATOR)
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        tahun_list = df['tahun'].unique().tolist()
+        tahun_list.sort(reverse=True)
+        selected_year = st.selectbox("📅 Pilih Tahun:", tahun_list)
+        
+    with col2:
+        # Dictionary untuk memetakan nama menu dengan nama kolom di Excel Anda
+        indikator_dict = {
+            "Skor Total IPEI": "ipei",
+            "Pilar 1: Pertumbuhan dan Perkembangan Ekonomi": "pilar1",
+            "Pilar 2: Kesetaraan dan Inklusi": "pilar2",
+            "Pilar 3: Kemiskinan dan Kondisi Pekerjaan": "pilar3",
+            "Sub-Pilar 1.1": "sp11",
+            "Sub-Pilar 1.2": "sp12",
+            "Sub-Pilar 1.3": "sp13",
+            "Sub-Pilar 2.1": "sp21",
+            "Sub-Pilar 2.2": "sp22",
+            "Sub-Pilar 3.1": "sp31",
+            "Sub-Pilar 3.2": "sp32",
+            "Sub-Pilar 3.3": "sp33"
+        }
+        selected_label = st.selectbox("🎯 Pilih Indikator yang Dipetakan:", list(indikator_dict.keys()))
+        selected_kolom = indikator_dict[selected_label]
     
     # Filter data berdasarkan tahun yang dipilih
     df_filtered = df[df['tahun'] == selected_year]
     
-    # Membuat Peta Interaktif dengan Plotly (Choropleth Map)
-    # Sesuaikan 'featureidkey' dengan struktur di dalam file JSON Anda (misal: properties.KODE)
+    # 2. MEMBUAT PETA INTERAKTIF DENGAN PLOTLY
     fig_map = px.choropleth_mapbox(
         df_filtered,
         geojson=geojson,
-        locations='kodedaerah',           # Kolom di Excel
-        featureidkey='properties.KODE',   # GANTI 'KODE' dengan nama properti kode wilayah di JSON Anda
-        color='ipei',                     # Kolom nilai yang menentukan warna
-        color_continuous_scale="Viridis",
+        locations='kodedaerah',           
+        featureidkey='properties.KODE',   # PASTIKAN SESUAI DENGAN JSON ANDA (misal: properties.WADMKK)
+        color=selected_kolom,             # Variabel warna sekarang dinamis menyesuaikan pilihan user
+        color_continuous_scale="RdYlGn",  # Skala warna Merah -> Kuning -> Hijau seperti di gambar
         mapbox_style="carto-positron",
         zoom=4,
-        center={"lat": -0.789, "lon": 113.921}, # Koordinat tengah Indonesia
-        opacity=0.7,
+        center={"lat": -0.789, "lon": 113.921}, 
+        opacity=0.8,
         hover_name='namadaerah',
-        hover_data={'kodedaerah': False, 'ipei': True, 'pilar1': True, 'pilar2': True, 'pilar3': True},
-        labels={'ipei': 'Skor IPEI'}
+        # Menampilkan detail saat kursor diarahkan ke area peta
+        hover_data={
+            'kodedaerah': False, 
+            'ipei': True, 
+            'pilar1': True, 
+            'pilar2': True, 
+            'pilar3': True
+        },
+        labels={selected_kolom: selected_label}
     )
     
-    fig_map.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
+    fig_map.update_layout(
+        margin={"r":0,"t":0,"l":0,"b":0},
+        coloraxis_colorbar=dict(
+            title="Nilai",
+            thicknessmode="pixels", thickness=15,
+            lenmode="pixels", len=300,
+            yanchor="top", y=1,
+            ticks="outside"
+        )
+    )
     
     # Tampilkan Peta
     st.plotly_chart(fig_map, use_container_width=True)
+    
+    # Menampilkan sedikit ringkasan data di bawah peta
+    st.info(f"Visualisasi menampilkan sebaran **{selected_label}** untuk tahun **{selected_year}**.")
 
 elif menu == "📈 Analisis Pilar & Tren":
     st.title("Analisis Tren dan Pilar Ekonomi Inklusif")
