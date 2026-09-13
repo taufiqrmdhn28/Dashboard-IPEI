@@ -214,8 +214,18 @@ with tab_beranda:
 # ISI TAB: PETA IPEI
 # =========================================================
 with tab_peta:
-    st.title("Peta Indeks Pembangunan Ekonomi Inklusif (IPEI)")
-    st.markdown("Pemetaan skor tingkat wilayah untuk evaluasi pembangunan makroekonomi.")
+    # 1. Custom Premium Header
+    st.markdown("""
+    <div style="margin-bottom: 25px; margin-top: 10px;">
+        <h2 style="color: #083c6b; font-weight: 800; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin-bottom: 8px;">
+            Eksplorasi Spasial IPEI
+        </h2>
+        <p style="color: #4a5568; font-size: 1.1rem; line-height: 1.6;">
+            Analisis geospasial interaktif pencapaian pembangunan makroekonomi wilayah. 
+            Sajikan data dengan presisi tinggi untuk mendukung pengambilan keputusan strategis.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
     if "tingkat_peta" not in st.session_state:
         st.session_state.tingkat_peta = "nasional"
@@ -225,9 +235,24 @@ with tab_peta:
         st.session_state.tingkat_peta = "nasional"
         st.session_state.provinsi_terpilih = None
 
+    # 2. Control Panel (Filter) dengan desain menyatu
+    st.markdown("""
+        <style>
+        .filter-panel {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 15px 25px 0px 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        </style>
+        <div class="filter-panel">
+    """, unsafe_allow_html=True)
+    
     col1, col2 = st.columns(2)
     with col1:
-        selected_year = st.selectbox("📅 Pilih Tahun:", [2025, 2024, 2023, 2022, 2021])
+        selected_year = st.selectbox("📅 Periode Analisis:", [2025, 2024, 2023, 2022, 2021])
 
     with col2:
         indikator_dict = {
@@ -239,13 +264,35 @@ with tab_peta:
             "Sub-Pilar 2.1": "sp21", "Sub-Pilar 2.2": "sp22",
             "Sub-Pilar 3.1": "sp31", "Sub-Pilar 3.2": "sp32", "Sub-Pilar 3.3": "sp33"
         }
-        selected_label = st.selectbox("🎯 Pilih Indikator yang Dipetakan:", list(indikator_dict.keys()))
+        selected_label = st.selectbox("🎯 Indikator Pemetaan:", list(indikator_dict.keys()))
         selected_kolom = indikator_dict[selected_label]
+        
+    st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown("---")
+    # 3. Pengaturan Desain Peta Plotly (Lebih Tinggi & Elegan)
+    fig_layout_updates = dict(
+        margin={"r":0,"t":0,"l":0,"b":0},
+        height=620, # Peta dibuat jauh lebih tinggi agar terlihat megah
+        coloraxis_colorbar=dict(
+            title=dict(text="Skor", font=dict(size=14, color='#083c6b', family="Segoe UI")), 
+            yanchor="middle", y=0.5, 
+            ticks="outside",
+            bgcolor="rgba(255,255,255,0.85)", # Latar belakang legenda semi-transparan
+            bordercolor="#cbd5e1",
+            borderwidth=1,
+            thickness=15,
+            len=0.8
+        )
+    )
 
     if st.session_state.tingkat_peta == "nasional":
-        st.info("💡 **Petunjuk:** Klik pada salah satu area Provinsi di peta untuk melihat detail Kabupaten/Kota di dalamnya.")
+        # Interactive Guide Box
+        st.markdown("""
+            <div style="background-color: #e6f2ff; border-left: 5px solid #2196f3; padding: 12px 20px; border-radius: 4px; margin-bottom: 25px;">
+                <span style="color: #0b5394; font-weight: 700;">💡 Interactive Guide:</span> <span style="color: #334155; font-weight: 500;">Klik pada area Provinsi mana pun di peta untuk melakukan <i>drill-down</i> interaktif ke tingkat Kabupaten/Kota.</span>
+            </div>
+        """, unsafe_allow_html=True)
+        
         df_prov_filtered = df_provinsi[df_provinsi['tahun'].astype(int) == selected_year].reset_index(drop=True)
 
         if not df_prov_filtered.empty:
@@ -253,28 +300,23 @@ with tab_peta:
                 fig_nasional = px.choropleth_map(
                     df_prov_filtered, geojson=geojson_provinsi, locations='kodedaerah',            
                     color=selected_kolom, color_continuous_scale="RdYlGn",  
-                    map_style="carto-positron", opacity=0.8, hover_name='namadaerah',
+                    map_style="carto-positron", opacity=0.85, hover_name='namadaerah',
                     labels={selected_kolom: selected_label}
                 )
-                fig_nasional.update_layout(
-                    map=dict(center={"lat": -0.789, "lon": 113.921}, zoom=4),
-                    margin={"r":0,"t":0,"l":0,"b":0},
-                    coloraxis_colorbar=dict(title="Nilai", yanchor="top", y=1, ticks="outside")
-                )
+                fig_nasional.update_layout(map=dict(center={"lat": -0.789, "lon": 113.921}, zoom=4.2), **fig_layout_updates)
             else:
                 fig_nasional = px.choropleth_mapbox(
                     df_prov_filtered, geojson=geojson_provinsi, locations='kodedaerah',            
                     color=selected_kolom, color_continuous_scale="RdYlGn",  
-                    mapbox_style="carto-positron", opacity=0.8, hover_name='namadaerah',
+                    mapbox_style="carto-positron", opacity=0.85, hover_name='namadaerah',
                     labels={selected_kolom: selected_label}
                 )
-                fig_nasional.update_layout(
-                    mapbox=dict(center={"lat": -0.789, "lon": 113.921}, zoom=4),
-                    margin={"r":0,"t":0,"l":0,"b":0},
-                    coloraxis_colorbar=dict(title="Nilai", yanchor="top", y=1, ticks="outside")
-                )
+                fig_nasional.update_layout(mapbox=dict(center={"lat": -0.789, "lon": 113.921}, zoom=4.2), **fig_layout_updates)
 
+            # 4. Membungkus Peta dalam wadah berbayang (Shadow Box) agar sekelas dashboard UI premium
+            st.markdown('<div style="border: 1px solid #e2e8f0; border-radius: 12px; padding: 4px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); background-color: white;">', unsafe_allow_html=True)
             event = st.plotly_chart(fig_nasional, use_container_width=True, on_select="rerun", selection_mode="points", key="peta_awal")
+            st.markdown('</div>', unsafe_allow_html=True)
             
             if event and event.get("selection") and event["selection"].get("points"):
                 st.session_state.provinsi_terpilih = event["selection"]["points"][0]["location"]
@@ -282,14 +324,20 @@ with tab_peta:
                 st.rerun()
 
     elif st.session_state.tingkat_peta == "provinsi":
-        st.button("⬅️ Kembali ke Peta Nasional", on_click=reset_peta)
+        # Desain tombol kembali (Back Button) dan Judul yang rapi
+        col_back, col_title = st.columns([1, 4])
+        with col_back:
+            st.button("🔙 Kembali ke Nasional", on_click=reset_peta, use_container_width=True)
+        with col_title:
+            st.markdown(f"<h3 style='margin-top: 5px; color: #083c6b; font-weight: 700;'>Detail Analisis Kabupaten/Kota</h3>", unsafe_allow_html=True)
+        
+        st.write("") # Spacer
+
         df_kab_filtered = df_kabkota[df_kabkota['tahun'].astype(int) == selected_year].copy()
         df_kab_filtered['kode_prov'] = df_kab_filtered['kodedaerah'].astype(str).str[:2] + "00"
         df_kab_zoom = df_kab_filtered[df_kab_filtered['kode_prov'] == str(st.session_state.provinsi_terpilih)].reset_index(drop=True)
         
         if not df_kab_zoom.empty:
-            st.markdown("### Detail Kabupaten/Kota")
-
             batas_provinsi = gdf_provinsi[gdf_provinsi['kode_provinsi'] == st.session_state.provinsi_terpilih]
             center_lat, center_lon, zoom_aman = -0.789, 113.921, 5 
             
@@ -305,27 +353,23 @@ with tab_peta:
                 fig_zoom = px.choropleth_map(
                     df_kab_zoom, geojson=geojson_kabkota, locations='kodedaerah',            
                     color=selected_kolom, color_continuous_scale="RdYlGn",  
-                    map_style="carto-positron", opacity=0.8, hover_name='namadaerah',
+                    map_style="carto-positron", opacity=0.85, hover_name='namadaerah',
                     labels={selected_kolom: selected_label}
                 )
-                fig_zoom.update_layout(
-                    map=dict(center={"lat": center_lat, "lon": center_lon}, zoom=zoom_aman),
-                    margin={"r":0,"t":0,"l":0,"b":0},
-                    coloraxis_colorbar=dict(title="Nilai", yanchor="top", y=1, ticks="outside")
-                )
+                fig_zoom.update_layout(map=dict(center={"lat": center_lat, "lon": center_lon}, zoom=zoom_aman), **fig_layout_updates)
             else:
                 fig_zoom = px.choropleth_mapbox(
                     df_kab_zoom, geojson=geojson_kabkota, locations='kodedaerah',            
                     color=selected_kolom, color_continuous_scale="RdYlGn",  
-                    mapbox_style="carto-positron", opacity=0.8, hover_name='namadaerah',
+                    mapbox_style="carto-positron", opacity=0.85, hover_name='namadaerah',
                     labels={selected_kolom: selected_label}
                 )
-                fig_zoom.update_layout(
-                    mapbox=dict(center={"lat": center_lat, "lon": center_lon}, zoom=zoom_aman),
-                    margin={"r":0,"t":0,"l":0,"b":0},
-                    coloraxis_colorbar=dict(title="Nilai", yanchor="top", y=1, ticks="outside")
-                )
+                fig_zoom.update_layout(mapbox=dict(center={"lat": center_lat, "lon": center_lon}, zoom=zoom_aman), **fig_layout_updates)
+            
+            # Membungkus peta zoom dengan Shadow Box yang sama
+            st.markdown('<div style="border: 1px solid #e2e8f0; border-radius: 12px; padding: 4px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); background-color: white;">', unsafe_allow_html=True)
             st.plotly_chart(fig_zoom, use_container_width=True, key="peta_zoom")
+            st.markdown('</div>', unsafe_allow_html=True)
 
 
 # =========================================================
