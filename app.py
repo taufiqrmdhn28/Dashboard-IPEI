@@ -4,7 +4,6 @@ import plotly.express as px
 import json
 import geopandas as gpd
 import math
-import textwrap
 
 # -----------------------------------------------------------------------------
 # 1. KONFIGURASI HALAMAN
@@ -80,7 +79,7 @@ df_provinsi, df_kabkota, geojson_provinsi, geojson_kabkota, gdf_provinsi = load_
 
 
 # -----------------------------------------------------------------------------
-# 3. KUSTOMISASI CSS GLOBAL
+# 3. KUSTOMISASI CSS & HEADER (LOGO)
 # -----------------------------------------------------------------------------
 st.markdown("""
     <style>
@@ -93,28 +92,10 @@ st.markdown("""
             padding-bottom: 1rem;
             max-width: 95%;
         }
-        
-        /* Mempercantik ukuran teks Tab agar rapi */
+        /* Perbesar ukuran teks Tab agar lebih proporsional */
         button[data-baseweb="tab"] p {
             font-size: 1.15rem;
             font-weight: 600;
-        }
-        
-        /* Memaksa tombol utama (primary) menjadi warna Biru Bappenas */
-        button[kind="primary"] {
-            background-color: #0b5394 !important;
-            border-color: #0b5394 !important;
-            transition: all 0.3s ease;
-        }
-        button[kind="primary"]:hover {
-            background-color: #083c6b !important;
-            border-color: #083c6b !important;
-        }
-        
-        /* Membuat ujung gambar (image) melengkung elegan */
-        .stImage > img {
-            border-radius: 15px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
         }
     </style>
 """, unsafe_allow_html=True)
@@ -130,599 +111,161 @@ except FileNotFoundError:
 
 
 # -----------------------------------------------------------------------------
-# 4. MENU NAVIGASI NATIVE (ST.TABS)
+# 4. MENU NAVIGASI (MENGGUNAKAN NATIVE TABS STREAMLIT)
 # -----------------------------------------------------------------------------
-# PERUBAHAN: Posisi "Tentang IPEI" digeser menjadi urutan ke-2
-tab_beranda, tab_tentang, tab_peta, tab_analisis, tab_metadata = st.tabs([
-    "Beranda", 
+tab_beranda, tab_tentang, tab_peta, tab_analisis = st.tabs([
+    "Beranda",
     "Tentang IPEI",
     "Peta IPEI", 
-    "Analisis Pilar & Tren", 
-    "Metadata"
+    "Analisis Pilar & Tren"
 ])
 
-
 # =========================================================
-# ISI TAB: BERANDA
+# ISI TAB: BERANDA (FULL BANNER)
 # =========================================================
 with tab_beranda:
-
-    # =====================================================
-    # CSS HERO BERANDA
-    # =====================================================
-    st.markdown("""
+    hero_html = """
     <style>
-
-    /* HERO UTAMA */
-    .st-key-hero_ipei {
-        position: relative;
-        overflow: hidden;
-
-        background:
-            radial-gradient(
-                circle at 83% 18%,
-                rgba(255,255,255,0.95) 0%,
-                rgba(255,255,255,0.55) 17%,
-                rgba(255,255,255,0) 42%
-            ),
-            linear-gradient(
-                180deg,
-                #fafdff 0%,
-                #eaf6ff 22%,
-                #cce8fa 48%,
-                #9dceef 72%,
-                #6eb2e1 100%
-            );
-
-        border-radius: 28px;
-        padding: 50px 55px;
-        margin-top: 25px;
-        margin-bottom: 30px;
-
-        min-height: 520px;
-
-        border: 1px solid rgba(11, 83, 148, 0.12);
-
-        box-shadow:
-            0px 18px 45px rgba(11, 83, 148, 0.15);
+    .modern-hero {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        /* Gradien biru muda yang sangat lembut untuk kesan bersih/elegan */
+        background: linear-gradient(135deg, #f4f9fc 0%, #e1eef7 100%);
+        padding: 60px 50px;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(11, 83, 148, 0.08);
+        margin-bottom: 20px;
+        gap: 40px;
     }
-
-
-    /* JUDUL */
-    .ipei-hero-title {
-        color: #143b5c;
-
-        font-family:
-            "Segoe UI",
-            Arial,
-            sans-serif;
-
-        font-size: clamp(3rem, 4vw, 4.7rem);
-
-        font-weight: 750;
-
-        line-height: 1.06;
-
-        letter-spacing: -2px;
-
-        margin-top: 30px;
-        margin-bottom: 25px;
+    .hero-content {
+        flex: 1;
+        max-width: 55%;
     }
-
-
-    .ipei-highlight {
+    .hero-badge {
+        background-color: #ffffff;
         color: #0b5394;
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 700;
+        display: inline-block;
+        margin-bottom: 20px;
+        border: 1px solid #dbeaf7;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        letter-spacing: 0.5px;
+    }
+    .hero-title {
+        color: #083c6b;
+        font-size: 3.2rem;
         font-weight: 800;
+        line-height: 1.15;
+        margin-bottom: 25px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
-
-
-    /* DESKRIPSI */
-    .ipei-description {
-        color: #42596d;
-
-        font-family:
-            "Segoe UI",
-            Arial,
-            sans-serif;
-
+    .hero-title span {
+        color: #2196f3; /* Biru terang untuk highlight kata */
+    }
+    .hero-desc {
+        color: #4a5568;
         font-size: 1.15rem;
-
         line-height: 1.7;
-
-        max-width: 690px;
-
-        margin-bottom: 30px;
+        margin-bottom: 35px;
     }
-
-
-    /* BUTTON PETA */
-    .st-key-btn_peta_ipei button {
-        background: #0b5394 !important;
-
+    .hero-buttons {
+        display: flex;
+        gap: 15px;
+    }
+    .btn-primary {
+        background-color: #0b5394;
         color: white !important;
-
-        border: none !important;
-
-        border-radius: 999px !important;
-
-        min-height: 54px;
-
-        font-size: 1rem !important;
-
-        font-weight: 700 !important;
-
-        box-shadow:
-            0px 8px 18px rgba(11,83,148,0.25);
-
-        transition: all 0.2s ease;
+        padding: 12px 28px;
+        border-radius: 30px;
+        font-weight: 600;
+        font-size: 1rem;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(11, 83, 148, 0.3);
+        cursor: default; /* Kursor default karena ini statis */
     }
-
-
-    .st-key-btn_peta_ipei button:hover {
-        background: #083c6b !important;
-
+    .btn-primary:hover {
+        background-color: #083c6b;
         transform: translateY(-2px);
-
-        box-shadow:
-            0px 10px 25px rgba(11,83,148,0.30);
     }
-
-
-    /* BUTTON METADATA */
-    .st-key-btn_metadata_ipei button {
-        background: rgba(255,255,255,0.55) !important;
-
-        color: #173f60 !important;
-
-        border: 1px solid rgba(11,83,148,0.14) !important;
-
-        border-radius: 999px !important;
-
-        min-height: 54px;
-
-        font-size: 1rem !important;
-
-        font-weight: 700 !important;
-
-        transition: all 0.2s ease;
-    }
-
-
-    .st-key-btn_metadata_ipei button:hover {
-        background: white !important;
-
+    .btn-secondary {
+        background-color: transparent;
         color: #0b5394 !important;
-
+        padding: 12px 28px;
+        border-radius: 30px;
+        font-weight: 600;
+        font-size: 1rem;
+        text-decoration: none;
+        border: 2px solid #0b5394;
+        transition: all 0.3s ease;
+        cursor: default;
+    }
+    .btn-secondary:hover {
+        background-color: #eaf3fa;
         transform: translateY(-2px);
     }
-
-
-    /* RESPONSIVE */
+    .hero-image-container {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        max-width: 45%;
+    }
+    .hero-image {
+        width: 100%;
+        max-width: 500px;
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        /* Efek 3D Tilt ala startup agar gambar tidak kaku */
+        transform: perspective(1000px) rotateY(-8deg);
+        transition: transform 0.5s ease;
+    }
+    .hero-image:hover {
+        transform: perspective(1000px) rotateY(0deg);
+    }
+    
+    /* Responsivitas untuk layar kecil */
     @media (max-width: 900px) {
-
-        .st-key-hero_ipei {
-            padding: 35px 28px;
-            min-height: auto;
+        .modern-hero {
+            flex-direction: column;
+            padding: 40px 30px;
         }
-
-        .ipei-hero-title {
-            font-size: 3rem;
-            letter-spacing: -1px;
+        .hero-content, .hero-image-container {
+            max-width: 100%;
         }
-
-        .ipei-description {
-            font-size: 1rem;
+        .hero-title {
+            font-size: 2.5rem;
+        }
+        .hero-image {
+            margin-top: 30px;
+            transform: none;
         }
     }
-
     </style>
-    """, unsafe_allow_html=True)
-
-
-    # =====================================================
-    # HERO CONTAINER
-    # =====================================================
-    with st.container(key="hero_ipei"):
-
-        col_teks, col_gambar = st.columns(
-            [1.15, 0.85],
-            gap="large"
-        )
-
-
-        # =================================================
-        # BAGIAN KIRI
-        # =================================================
-        with col_teks:
-
-            hero_text = """
-<div class="ipei-hero-title">
-    Indeks Pembangunan<br>
-    Ekonomi Inklusif
-    <span class="ipei-highlight">(IPEI)</span>
-</div>
-
-<div class="ipei-description">
-    Tingkatkan evaluasi pembangunan makroekonomi daerah
-    dengan analitik spasial yang komprehensif.
-    <br><br>
-    Jaga fokus analisis strategis sekaligus wujudkan
-    ekosistem pertumbuhan yang inklusif dan
-    berwawasan lingkungan.
-</div>
-"""
-
-            st.markdown(
-                textwrap.dedent(hero_text),
-                unsafe_allow_html=True
-            )
-
-
-            # =============================================
-            # BUTTON
-            # =============================================
-
-            btn1, btn2 = st.columns(
-                [1, 0.9],
-                gap="small"
-            )
-
-
-            # -------------------------
-            # EKSPLORASI PETA
-            # -------------------------
-            with btn1:
-
-                if st.button(
-                    "🗺️  Eksplorasi Peta",
-                    type="primary",
-                    use_container_width=True,
-                    key="btn_peta_ipei"
-                ):
-
-                    js_peta = """
-                    <script>
-
-                    var tabs =
-                    window.parent.document.querySelectorAll(
-                        'button[data-baseweb="tab"]'
-                    );
-
-                    for (var i = 0; i < tabs.length; i++) {
-
-                        if (
-                            tabs[i].innerText.includes(
-                                'Peta IPEI'
-                            )
-                        ) {
-
-                            tabs[i].click();
-                            break;
-
-                        }
-                    }
-
-                    </script>
-                    """
-
-                    st.components.v1.html(
-                        js_peta,
-                        height=0
-                    )
-
-
-            # -------------------------
-            # METADATA
-            # -------------------------
-            with btn2:
-
-                if st.button(
-                    "📄  Metadata",
-                    use_container_width=True,
-                    key="btn_metadata_ipei"
-                ):
-
-                    js_metadata = """
-                    <script>
-
-                    var tabs =
-                    window.parent.document.querySelectorAll(
-                        'button[data-baseweb="tab"]'
-                    );
-
-                    for (var i = 0; i < tabs.length; i++) {
-
-                        if (
-                            tabs[i].innerText.includes(
-                                'Metadata'
-                            )
-                        ) {
-
-                            tabs[i].click();
-                            break;
-
-                        }
-                    }
-
-                    </script>
-                    """
-
-                    st.components.v1.html(
-                        js_metadata,
-                        height=0
-                    )
-
-
-        # =================================================
-        # BAGIAN KANAN
-        # ILUSTRASI EKONOMI INKLUSIF
-        # =================================================
-        with col_gambar:
-
-            ilustrasi = """
-<div style="
-    width:100%;
-    min-height:430px;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-">
-
-<svg
-    width="100%"
-    height="440"
-    viewBox="0 0 600 500"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
->
-
-    <!-- GLOW BACKGROUND -->
-    <circle
-        cx="310"
-        cy="245"
-        r="210"
-        fill="white"
-        fill-opacity="0.28"
-    />
-
-    <circle
-        cx="310"
-        cy="245"
-        r="165"
-        fill="white"
-        fill-opacity="0.20"
-    />
-
-
-    <!-- PLATFORM -->
-    <ellipse
-        cx="315"
-        cy="415"
-        rx="225"
-        ry="43"
-        fill="#0B5394"
-        fill-opacity="0.12"
-    />
-
-
-    <!-- BAR 1 -->
-    <rect
-        x="210"
-        y="295"
-        width="62"
-        height="110"
-        rx="15"
-        fill="#64B5E5"
-    />
-
-    <!-- BAR 2 -->
-    <rect
-        x="290"
-        y="235"
-        width="62"
-        height="170"
-        rx="15"
-        fill="#2B8ACB"
-    />
-
-    <!-- BAR 3 -->
-    <rect
-        x="370"
-        y="165"
-        width="62"
-        height="240"
-        rx="15"
-        fill="#0B5394"
-    />
-
-
-    <!-- GARIS PERTUMBUHAN -->
-    <path
-        d="
-        M170 320
-        C220 300,
-        250 275,
-        290 245
-        C335 210,
-        355 195,
-        405 150
-        C430 128,
-        450 115,
-        472 105
-        "
-        stroke="#083C6B"
-        stroke-width="11"
-        stroke-linecap="round"
-        fill="none"
-    />
-
-
-    <!-- ARROW -->
-    <path
-        d="M444 99 L480 101 L470 136"
-        stroke="#083C6B"
-        stroke-width="11"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-    />
-
-
-    <!-- ORANG KIRI -->
-    <circle
-        cx="125"
-        cy="235"
-        r="29"
-        fill="#F5C46B"
-    />
-
-    <rect
-        x="94"
-        y="270"
-        width="62"
-        height="87"
-        rx="28"
-        fill="#FFFFFF"
-    />
-
-    <path
-        d="M103 290 L68 333"
-        stroke="#FFFFFF"
-        stroke-width="19"
-        stroke-linecap="round"
-    />
-
-    <path
-        d="M148 290 L181 330"
-        stroke="#FFFFFF"
-        stroke-width="19"
-        stroke-linecap="round"
-    />
-
-
-    <!-- ORANG KANAN -->
-    <circle
-        cx="498"
-        cy="260"
-        r="29"
-        fill="#E6A65F"
-    />
-
-    <rect
-        x="467"
-        y="294"
-        width="62"
-        height="87"
-        rx="28"
-        fill="#DFF3FF"
-    />
-
-    <path
-        d="M475 313 L441 348"
-        stroke="#DFF3FF"
-        stroke-width="19"
-        stroke-linecap="round"
-    />
-
-    <path
-        d="M520 313 L550 347"
-        stroke="#DFF3FF"
-        stroke-width="19"
-        stroke-linecap="round"
-    />
-
-
-    <!-- ORANG ATAS -->
-    <circle
-        cx="290"
-        cy="80"
-        r="27"
-        fill="#F4BD66"
-    />
-
-    <rect
-        x="260"
-        y="111"
-        width="61"
-        height="74"
-        rx="29"
-        fill="#FFFFFF"
-    />
-
-
-    <!-- NETWORK CIRCLE -->
-    <circle
-        cx="125"
-        cy="235"
-        r="47"
-        stroke="white"
-        stroke-opacity="0.55"
-        stroke-width="3"
-    />
-
-    <circle
-        cx="498"
-        cy="260"
-        r="47"
-        stroke="white"
-        stroke-opacity="0.55"
-        stroke-width="3"
-    />
-
-    <circle
-        cx="290"
-        cy="80"
-        r="45"
-        stroke="white"
-        stroke-opacity="0.55"
-        stroke-width="3"
-    />
-
-
-    <!-- NETWORK -->
-    <path
-        d="M162 207 L257 108"
-        stroke="white"
-        stroke-opacity="0.6"
-        stroke-width="3"
-        stroke-dasharray="8 8"
-    />
-
-    <path
-        d="M326 105 L464 228"
-        stroke="white"
-        stroke-opacity="0.6"
-        stroke-width="3"
-        stroke-dasharray="8 8"
-    />
-
-
-    <!-- SMALL DOT -->
-    <circle
-        cx="182"
-        cy="126"
-        r="8"
-        fill="white"
-        fill-opacity="0.8"
-    />
-
-    <circle
-        cx="450"
-        cy="205"
-        r="7"
-        fill="white"
-        fill-opacity="0.8"
-    />
-
-</svg>
-
-</div>
-"""
-
-            st.markdown(
-                textwrap.dedent(ilustrasi),
-                unsafe_allow_html=True
-            )
-
+    
+    <div class="modern-hero">
+        <div class="hero-content">
+            <div class="hero-badge">Tim Data & Analisis Makro</div>
+            <div class="hero-title">Indeks Pembangunan Ekonomi Inklusif <span>(IPEI)</span></div>
+            <div class="hero-desc">
+                Tingkatkan evaluasi pembangunan makroekonomi daerah dengan analitik spasial yang komprehensif. Jaga fokus analisis strategis sekaligus wujudkan ekosistem pertumbuhan yang inklusif dan berwawasan lingkungan.
+            </div>
+            <div class="hero-buttons">
+                <div class="btn-primary">Mulai Eksplorasi Peta</div>
+                <div class="btn-secondary">Lihat Metodologi</div>
+            </div>
+        </div>
+        <div class="hero-image-container">
+            <!-- Gambar tema lingkungan resolusi tinggi dari Unsplash -->
+            <img src="https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=800&auto=format&fit=crop" class="hero-image" alt="Lingkungan Berkelanjutan">
+        </div>
+    </div>
+    """
+    st.markdown(hero_html, unsafe_allow_html=True)
 
 # =========================================================
 # ISI TAB: PETA IPEI
@@ -869,8 +412,111 @@ with tab_analisis:
 
 
 # =========================================================
-# ISI TAB: METADATA
+# ISI TAB: TENTANG IPEI
 # =========================================================
-with tab_metadata:
-    st.title("Metadata Indikator IPEI")
-    st.info("Halaman penjelasan dan kamus data Metadata sedang dalam tahap pengembangan dan akan segera ditambahkan di sini.")
+with tab_tentang:
+    st.title("Tentang Indeks Pembangunan Ekonomi Inklusif")
+    st.markdown("""
+    <style>
+    .hero-banner-info {
+        background: linear-gradient(135deg, #0b5394 0%, #3d85c6 100%);
+        padding: 40px;
+        border-radius: 15px;
+        color: white;
+        margin-bottom: 30px;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    .hero-title-info {
+        font-size: 2.2em;
+        font-weight: 700;
+        margin-bottom: 15px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .hero-text-info {
+        font-size: 1.15em;
+        line-height: 1.6;
+        margin-bottom: 0;
+        opacity: 0.95;
+    }
+    .card-container {
+        background-color: #ffffff;
+        border-radius: 12px;
+        padding: 25px 20px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+        border: 1px solid #f0f2f6;
+        height: 100%;
+        transition: transform 0.3s ease;
+    }
+    .card-container:hover {
+        transform: translateY(-5px);
+    }
+    .card-title {
+        color: #0b5394;
+        font-size: 1.25em;
+        font-weight: 700;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #f0f2f6;
+        padding-bottom: 12px;
+        line-height: 1.4;
+    }
+    .sub-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 12px;
+        font-size: 1.05em;
+        color: #444444;
+        font-weight: 500;
+    }
+    .sub-icon {
+        margin-right: 12px;
+        font-size: 1.3em;
+        background-color: #f0f8ff;
+        padding: 5px;
+        border-radius: 8px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class="hero-banner-info">
+        <div class="hero-title-info">Indeks Pembangunan Ekonomi Inklusif (IPEI)</div>
+        <div class="hero-text-info">
+            Indeks Pembangunan Ekonomi Inklusif (IPEI) merupakan alat ukur komprehensif untuk memantau tingkat inklusivitas pembangunan ekonomi suatu wilayah. Indeks ini dirancang untuk memastikan bahwa pertumbuhan ekonomi berjalan selaras dengan pemerataan pendapatan, pengurangan kemiskinan, serta perluasan akses dan kesempatan bagi seluruh lapisan masyarakat.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("### Komponen Pembentuk IPEI")
+    st.markdown("Struktur penilaian IPEI didasarkan pada **3 (tiga) pilar utama** dan **8 (delapan) sub-pilar** penggerak, yaitu:")
+    st.write("") 
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.markdown("""
+        <div class="card-container">
+            <div class="card-title">Pilar 1:<br>Pertumbuhan & Perkembangan Ekonomi</div>
+            <div class="sub-item"><span class="sub-icon">📊</span> Sub-Pilar 1.1: Pertumbuhan Ekonomi</div>
+            <div class="sub-item"><span class="sub-icon">💼</span> Sub-Pilar 1.2: Kesempatan Kerja</div>
+            <div class="sub-item"><span class="sub-icon">🏗️</span> Sub-Pilar 1.3: Infrastruktur</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col2:
+        st.markdown("""
+        <div class="card-container">
+            <div class="card-title">Pilar 2:<br>Pemerataan Pendapatan & Pengurangan Kemiskinan</div>
+            <div class="sub-item"><span class="sub-icon">📉</span> Sub-Pilar 2.1: Ketimpangan</div>
+            <div class="sub-item"><span class="sub-icon">🛡️</span> Sub-Pilar 2.2: Kemiskinan</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col3:
+        st.markdown("""
+        <div class="card-container">
+            <div class="card-title">Pilar 3:<br>Perluasan Akses & Kesempatan</div>
+            <div class="sub-item"><span class="sub-icon">🎓</span> Sub-Pilar 3.1: Kapabilitas Manusia</div>
+            <div class="sub-item"><span class="sub-icon">🏥</span> Sub-Pilar 3.2: Infrastruktur Dasar</div>
+            <div class="sub-item"><span class="sub-icon">💳</span> Sub-Pilar 3.3: Keuangan Inklusif</div>
+        </div>
+        """, unsafe_allow_html=True)
