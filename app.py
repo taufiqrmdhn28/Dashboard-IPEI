@@ -372,9 +372,6 @@ with tab_peta:
             st.markdown('</div>', unsafe_allow_html=True)
 
 
-# =========================================================
-# ISI TAB: ANALISIS PILAR & TREN
-# =========================================================
 with tab_analisis:
     st.markdown("""
         <style>
@@ -382,7 +379,6 @@ with tab_analisis:
         .analytics-title { color: #083c6b; font-weight: 800; font-size: 2.2rem; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin-bottom: 8px; }
         .analytics-subtitle { color: #4a5568; font-size: 1.1rem; line-height: 1.6; }
         .chart-card { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); margin-bottom: 25px; }
-        /* Kustomisasi scrollbar untuk tabel historis */
         .history-table::-webkit-scrollbar { width: 6px; }
         .history-table::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
         </style>
@@ -394,14 +390,14 @@ with tab_analisis:
         </div>
     """, unsafe_allow_html=True)
 
-    # Hierarki Indikator (Otomatis mengubah sub-komponen saat dropdown dipilih)
+    # Hierarki Indikator
     hierarki_indikator = {
         "Skor Total IPEI": {
             "kolom": "ipei",
             "komponen": {
                 "Pilar 1: Pertumbuhan & Perkembangan": "pilar1",
                 "Pilar 2: Kesetaraan & Inklusi": "pilar2",
-                "Pilar 3: Kemiskinan & Kondisi Pekerjaan": "pilar3"
+                "Pilar 3: Kemiskinan & Pekerjaan": "pilar3"
             }
         },
         "Pilar 1: Pertumbuhan dan Perkembangan Ekonomi": {
@@ -448,48 +444,39 @@ with tab_analisis:
         )
         return fig
 
-    # --- FUNGSI HELPER TABEL HISTORIS PROGRESS BAR ---
+    # --- FUNGSI HELPER TABEL HISTORIS PROGRESS BAR (ANTI-BOCOR) ---
     def buat_tabel_historis(df, komponen):
         komponen_cols = list(komponen.values())
         max_val_data = df[komponen_cols].max().max() if not df.empty else 10
-        max_val_bar = max(10, max_val_data * 1.15) # Buffer visual 15%
+        max_val_bar = max(10, max_val_data * 1.15) 
 
-        html = '<div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); margin-top: 5px;">'
-        html += '<div style="margin-bottom:15px; font-weight:800; color:#083c6b; font-size:1.15rem;">Rincian Historis Komposisi Penyusun (2011 - 2025)</div>'
-
-        # Baris Header Kolom
-        html += '<div style="display: flex; align-items: flex-end; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 5px;">'
-        html += '<div style="width: 70px; font-weight: 700; color: #475569; font-size: 0.85rem;">Tahun</div>'
-        for label in komponen.keys():
-            html += f'<div style="flex: 1; padding: 0 15px; font-weight: 700; color: #475569; font-size: 0.85rem; line-height: 1.3;">{label}</div>'
-        html += '</div>'
-
-        # Kontainer Isi (Bisa di-scroll jika layar kecil, tapi default menampung semua)
-        html += '<div class="history-table" style="max-height: 450px; overflow-y: auto; padding-right: 5px;">'
+        # Menggunakan List untuk menyusun HTML dalam satu baris murni tanpa "enter" yang bikin error di Streamlit
+        html = []
+        html.append('<div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); margin-top: 5px;">')
+        html.append('<div style="margin-bottom:15px; font-weight:800; color:#083c6b; font-size:1.15rem;">Rincian Historis Komposisi Penyusun (2011 - 2025)</div>')
+        html.append('<div style="display: flex; align-items: flex-end; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 5px;">')
+        html.append('<div style="width: 70px; font-weight: 700; color: #475569; font-size: 0.85rem;">Tahun</div>')
         
-        # Loop semua tahun (2011 - 2025)
-        for yr in sorted(df['tahun'].unique(), reverse=True): # Diurutkan dari tahun terbaru (opsional, bisa hapus reverse=True jika ingin dari 2011)
+        for label in komponen.keys():
+            html.append(f'<div style="flex: 1; padding: 0 15px; font-weight: 700; color: #475569; font-size: 0.85rem; line-height: 1.3;">{label}</div>')
+        html.append('</div><div class="history-table" style="max-height: 450px; overflow-y: auto; padding-right: 5px;">')
+        
+        # Looping urut tahun terbaru ke paling lama
+        for yr in sorted(df['tahun'].unique(), reverse=True):
             df_yr = df[df['tahun'] == yr]
-            # Baris Tahun dengan efek highlight saat di-hover
-            html += '<div style="display: flex; align-items: center; border-bottom: 1px solid #f8fafc; padding: 12px 0; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor=\'#f1f5f9\'" onmouseout="this.style.backgroundColor=\'transparent\'">'
-            html += f'<div style="width: 70px; font-weight: 800; color: #64748b; font-size: 0.95rem;">{int(yr)}</div>'
+            html.append(f'<div style="display: flex; align-items: center; border-bottom: 1px solid #f8fafc; padding: 12px 0; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor=\'#f1f5f9\'" onmouseout="this.style.backgroundColor=\'transparent\'">')
+            html.append(f'<div style="width: 70px; font-weight: 800; color: #64748b; font-size: 0.95rem;">{int(yr)}</div>')
             
-            # Looping Progress bar setiap pilar/sub-pilar
             for label, col in komponen.items():
                 val = df_yr[col].values[0] if not df_yr.empty else 0
                 pct = min((val / max_val_bar) * 100, 100)
-                html += f'''
-                <div style="flex: 1; padding: 0 15px;">
-                    <div style="font-size: 0.9rem; color: #0f172a; font-weight: 700; margin-bottom: 5px;">{val:.2f}</div>
-                    <div style="width: 100%; background: #e2e8f0; height: 7px; border-radius: 4px;">
-                        <div style="width: {pct}%; background: linear-gradient(90deg, #0ea5e9, #2563eb); height: 100%; border-radius: 4px;"></div>
-                    </div>
-                </div>
-                '''
-            html += '</div>'
+                # Tag HTML dipadatkan agar tidak dibaca sebagai paragraf oleh Streamlit
+                html.append(f'<div style="flex: 1; padding: 0 15px;"><div style="font-size: 0.9rem; color: #0f172a; font-weight: 700; margin-bottom: 5px;">{val:.2f}</div><div style="width: 100%; background: #e2e8f0; height: 7px; border-radius: 4px;"><div style="width: {pct}%; background: linear-gradient(90deg, #0ea5e9, #2563eb); height: 100%; border-radius: 4px;"></div></div></div>')
+            
+            html.append('</div>')
         
-        html += '</div></div>'
-        return html
+        html.append('</div></div>')
+        return "".join(html)
 
 
     # ==========================================
@@ -515,11 +502,11 @@ with tab_analisis:
             st.markdown('<div class="chart-card">', unsafe_allow_html=True)
             # 1. Grafik Area Line
             st.plotly_chart(buat_grafik_area(df_prov_chart, kolom_target, pilihan_ind), use_container_width=True)
-            # 2. Tabel Grid Historis (Tahun 2011 - 2025)
+            # 2. Tabel Grid Historis 2011-2025
             st.markdown(buat_tabel_historis(df_prov_chart, komponen), unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
             
-            # --- FITUR DOWNLOAD FULL DATA PROVINSI (Mengabaikan Filter) ---
+            # --- FITUR DOWNLOAD FULL DATA (MENGABAIKAN FILTER) ---
             csv_prov_all = df_provinsi.to_csv(index=False).encode('utf-8')
             st.download_button(
                 label="📥 Unduh Seluruh Data Provinsi (CSV)",
@@ -560,11 +547,11 @@ with tab_analisis:
             st.markdown('<div class="chart-card">', unsafe_allow_html=True)
             # 1. Grafik Area Line
             st.plotly_chart(buat_grafik_area(df_kab_chart, kolom_target_kab, pilihan_ind_kab), use_container_width=True)
-            # 2. Tabel Grid Historis (Tahun 2011 - 2025)
+            # 2. Tabel Grid Historis 2011-2025
             st.markdown(buat_tabel_historis(df_kab_chart, komponen_kab), unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
             
-            # --- FITUR DOWNLOAD FULL DATA KABUPATEN (Mengabaikan Filter) ---
+            # --- FITUR DOWNLOAD FULL DATA (MENGABAIKAN FILTER) ---
             csv_kab_all = df_kabkota.to_csv(index=False).encode('utf-8')
             st.download_button(
                 label="📥 Unduh Seluruh Data Kabupaten/Kota (CSV)",
