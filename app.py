@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import json
-import traceback  # <-- Modul baru untuk melacak pesan error yang disembunyikan server
 
 # -----------------------------------------------------------------------------
 # 1. KONFIGURASI HALAMAN
@@ -15,7 +14,7 @@ st.set_page_config(
 )
 
 # -----------------------------------------------------------------------------
-# 2. FUNGSI PEMUATAN DATA (CACHING) DENGAN PEMBERSIH JSON EKSTRA KETAT
+# 2. FUNGSI PEMUATAN DATA (CACHING) 
 # -----------------------------------------------------------------------------
 @st.cache_data
 def load_data():
@@ -35,25 +34,20 @@ def load_data():
     with open("38_Provinsi_Indonesia_Kabupaten_Adjusted.json", "r", encoding="utf-8") as f:
         geojson = json.load(f)
         
-    # 3. Sisir file JSON untuk memastikan strukturnya 100% aman untuk Plotly
+    # 3. Sisir file JSON untuk memastikan strukturnya aman
     features_valid = []
     for feature in geojson.get('features', []):
-        # Abaikan wilayah yang tidak memiliki koordinat bentuk (geometry)
         if not feature.get('geometry'):
             continue
-            
-        # Pastikan properties ada
         if not isinstance(feature.get('properties'), dict):
             feature['properties'] = {}
             
-        # Ambil kode, bersihkan, dan pastikan selalu ada kodenya
         kode_asli = feature['properties'].get('kodedaerah_kabkota', 'UNKNOWN')
         if pd.isna(kode_asli) or kode_asli is None:
             kode_asli = 'UNKNOWN'
             
         kode_bersih = str(kode_asli).replace('.0', '').strip()
         feature['properties']['kodedaerah_kabkota'] = kode_bersih
-            
         features_valid.append(feature)
             
     geojson['features'] = features_valid
@@ -98,35 +92,47 @@ if menu == "🏠 Halaman Utama (Peta IPEI)":
         selected_label = st.selectbox("🎯 Pilih Indikator yang Dipetakan:", list(indikator_dict.keys()))
         selected_kolom = indikator_dict[selected_label]
     
-    # Filter dan reset index untuk mencegah bug internal pandas/plotly
     df_filtered = df[df['tahun'].astype(int) == selected_year].reset_index(drop=True)
     
     if df_filtered.empty:
         st.warning(f"⚠️ Data untuk tahun {selected_year} tidak ditemukan di file Excel.")
     else:
-        # MEMBUAT PETA DENGAN MODE DETEKTIF
-        try:
-            # Versi Minimalis: hover_data dan pengaturan warna dinonaktifkan sementara
-            fig_map = px.choropleth_mapbox(
-                df_filtered,
-                geojson=geojson,
-                locations='kodedaerah',           
-                featureidkey='properties.kodedaerah_kabkota',   
-                color=selected_kolom,             
-                color_continuous_scale="RdYlGn",  
-                mapbox_style="carto-positron",
-                zoom=4,
-                center={"lat": -0.789, "lon": 113.921}, 
-                opacity=0.8
+        # MENGGUNAKAN FUNGSI TERBARU: choropleth_map
+        fig_map = px.choropleth_map(
+            df_filtered,
+            geojson=geojson,
+            locations='kodedaerah',           
+            featureidkey='properties.kodedaerah_kabkota',   
+            color=selected_kolom,             
+            color_continuous_scale="RdYlGn",  
+            map_style="carto-positron",       # GANTI DARI mapbox_style MENJADI map_style
+            zoom=4,
+            center={"lat": -0.789, "lon": 113.921}, 
+            opacity=0.8,
+            hover_name='namadaerah',
+            hover_data={
+                'kodedaerah': False, 
+                'ipei': True, 
+                'pilar1': True, 
+                'pilar2': True, 
+                'pilar3': True
+            },
+            labels={selected_kolom: selected_label}
+        )
+        
+        fig_map.update_layout(
+            margin={"r":0,"t":0,"l":0,"b":0},
+            coloraxis_colorbar=dict(
+                title="Nilai",
+                thicknessmode="pixels", thickness=15,
+                lenmode="pixels", len=300,
+                yanchor="top", y=1,
+                ticks="outside"
             )
-            
-            st.plotly_chart(fig_map, use_container_width=True)
-            st.success("✅ Peta berhasil dirender! Jika ini muncul, berarti error sebelumnya disebabkan oleh parameter tambahan (seperti hover_data).")
-            
-        except Exception as e:
-            st.error("🚨 GAGAL MERENDER PETA. BERIKUT ADALAH LOG ERROR ASLINYA:")
-            # Ini akan mencetak error merah asli ke layar Anda
-            st.code(traceback.format_exc())
+        )
+        
+        st.plotly_chart(fig_map, use_container_width=True)
+        st.info(f"Visualisasi menampilkan sebaran **{selected_label}** untuk tahun **{selected_year}**.")
 
 elif menu == "📈 Analisis Pilar & Tren":
     st.title("Analisis Tren dan Pilar Ekonomi Inklusif")
