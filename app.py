@@ -15,7 +15,7 @@ st.set_page_config(
 )
 
 # -----------------------------------------------------------------------------
-# 2. FUNGSI PEMUATAN DATA (OPTIMASI KECEPATAN & AUTO-ZOOM)
+# 2. FUNGSI PEMUATAN DATA (OPTIMASI KECEPATAN & FIX ID)
 # -----------------------------------------------------------------------------
 @st.cache_data
 def load_data():
@@ -61,23 +61,24 @@ def load_data():
     # --- C. OPTIMASI GEOPANDAS (SIMPLIFIKASI & DISSOLVE) ---
     gdf_kab = gpd.GeoDataFrame.from_features(geojson_kabkota)
     
-    # ⚡ PERBAIKAN LOADING: Menyederhanakan poligon agar loading peta 10x lebih cepat
+    # 🌟 PERBAIKAN: Kunci Index agar 'id' peta tidak berubah jadi 0, 1, 2...
+    gdf_kab['kodedaerah'] = [f['id'] for f in geojson_kabkota['features']]
+    gdf_kab.set_index('kodedaerah', inplace=True)
+    
+    # ⚡ PERBAIKAN LOADING: Menyederhanakan poligon
     gdf_kab['geometry'] = gdf_kab['geometry'].simplify(tolerance=0.005, preserve_topology=True)
     
     # Leburkan batas kabupaten menjadi provinsi
     gdf_prov = gdf_kab.dissolve(by='kode_provinsi').reset_index()
+    
+    # Kunci Index juga untuk Provinsi
+    gdf_prov.set_index('kode_provinsi', inplace=True)
 
-    # Ubah GDF ke String JSON, lalu jadikan Dictionary JSON agar bisa dibaca Plotly
     geojson_prov_dict = json.loads(gdf_prov.to_json())
-    for feature in geojson_prov_dict['features']:
-        feature['id'] = feature['properties']['kode_provinsi'] # Set ID untuk provinsi
-
     geojson_kab_dict = json.loads(gdf_kab.to_json())
 
-    # Return juga Geodataframe-nya (gdf_prov) agar kita bisa pakai untuk menghitung ZOOM
-    return df_provinsi, df_kabkota, geojson_prov_dict, geojson_kab_dict, gdf_prov
+    return df_provinsi, df_kabkota, geojson_prov_dict, geojson_kab_dict, gdf_prov.reset_index()
 
-# Eksekusi Cache Data
 df_provinsi, df_kabkota, geojson_provinsi, geojson_kabkota, gdf_provinsi = load_data()
 
 
@@ -135,7 +136,6 @@ if menu == "🏠 Halaman Utama (Peta IPEI)":
         df_prov_filtered = df_provinsi[df_provinsi['tahun'].astype(int) == selected_year].reset_index(drop=True)
 
         if not df_prov_filtered.empty:
-            # PERBAIKAN: Menggunakan px.choropleth_mapbox dan mapbox_style
             fig_nasional = px.choropleth_mapbox(
                 df_prov_filtered,
                 geojson=geojson_provinsi, 
@@ -148,7 +148,6 @@ if menu == "🏠 Halaman Utama (Peta IPEI)":
                 labels={selected_kolom: selected_label}
             )
 
-            # PERBAIKAN: Menggunakan properti 'mapbox' bukan 'map'
             fig_nasional.update_layout(
                 mapbox=dict(center={"lat": -0.789, "lon": 113.921}, zoom=4),
                 margin={"r":0,"t":0,"l":0,"b":0},
@@ -175,7 +174,6 @@ if menu == "🏠 Halaman Utama (Peta IPEI)":
         if not df_kab_zoom.empty:
             st.markdown("### Detail Kabupaten/Kota")
 
-            # PERBAIKAN: Menggunakan px.choropleth_mapbox dan mapbox_style
             fig_zoom = px.choropleth_mapbox(
                 df_kab_zoom,
                 geojson=geojson_kabkota, 
@@ -192,9 +190,9 @@ if menu == "🏠 Halaman Utama (Peta IPEI)":
             if not batas_provinsi.empty:
                 minx, miny, maxx, maxy = batas_provinsi.total_bounds
                 
-                # PERBAIKAN: Hanya menggunakan properti 'mapbox' (menghapus properti 'map' yang ditolak server)
+                # Plotly Mapbox Fitbounds Support (Versi >= 5.11)
                 fig_zoom.update_layout(
-                    mapbox=dict(bounds={"west": minx, "east": maxx, "south": miny, "north": maxy})
+                    mapbox=dict(bounds={"west": float(minx), "east": float(maxx), "south": float(miny), "north": float(maxy)})
                 )
 
             fig_zoom.update_layout(
@@ -204,8 +202,9 @@ if menu == "🏠 Halaman Utama (Peta IPEI)":
 
             st.plotly_chart(fig_zoom, use_container_width=True, key="peta_zoom")
 
+
 # -----------------------------------------------------------------------------
-# MENU LAIN (ANALISIS & TENTANG IPEI) TETAP SAMA DENGAN SEBELUMNYA
+# MENU LAIN (ANALISIS & TENTANG IPEI)
 # -----------------------------------------------------------------------------
 elif menu == "📈 Analisis Pilar & Tren":
     st.title("Analisis Tren dan Pilar Ekonomi Inklusif")
