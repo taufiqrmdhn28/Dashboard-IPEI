@@ -93,13 +93,66 @@ st.sidebar.title("Navigasi Dashboard")
 st.sidebar.markdown("---")
 menu = st.sidebar.radio(
     "Pilih Halaman:",
-    ("🏠 Halaman Utama (Peta IPEI)", "📈 Analisis Pilar & Tren", "ℹ️ Tentang IPEI")
+    ("🏠 Beranda", "🗺️ Peta IPEI", "📈 Analisis Pilar & Tren", "ℹ️ Tentang IPEI")
 )
 
 
 # -----------------------------------------------------------------------------
 # 4. KONTEN HALAMAN
 # -----------------------------------------------------------------------------
+if menu == "🏠 Beranda":
+    
+    # Gunakan HTML dan CSS untuk membuat Hero Banner yang elegan
+    hero_html = """
+    <style>
+    .hero-container {
+        /* Gradien biru transparan dipadukan dengan gambar latar (link gambar bisa diganti) */
+        background-image: linear-gradient(to right, rgba(10, 54, 104, 0.95), rgba(30, 136, 229, 0.4)), url('https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=2000&auto=format&fit=crop');
+        background-size: cover;
+        background-position: center;
+        border-radius: 15px;
+        padding: 80px 50px;
+        color: white;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    }
+    .hero-title {
+        font-size: 3.2rem;
+        font-weight: 800;
+        margin-bottom: 20px;
+        line-height: 1.2;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .hero-subtitle {
+        font-size: 1.2rem;
+        font-weight: 400;
+        max-width: 800px;
+        line-height: 1.6;
+        opacity: 0.95;
+    }
+    </style>
+    
+    <div class="hero-container">
+        <div class="hero-title">Indeks Pembangunan Ekonomi Inklusif (IPEI)</div>
+        <div class="hero-subtitle">
+            Platform visualisasi interaktif untuk mengevaluasi pemerataan pembangunan dan inklusivitas makroekonomi daerah. 
+            Dasbor ini dirancang untuk mendukung penguatan <i>evidence-based planning</i> dalam pengembangan model pembangunan di seluruh wilayah Indonesia.
+        </div>
+    </div>
+    """
+    
+    # Menampilkan banner di Streamlit
+    st.markdown(hero_html, unsafe_allow_html=True)
+    
+    # Menambahkan kartu fitur di bawah banner agar terlihat lebih padat
+    st.markdown("### 📌 Fitur Utama Dasbor")
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.info("**🗺️ Peta Spasial**\n\nEksplorasi sebaran skor IPEI tingkat Provinsi hingga Kabupaten/Kota secara interaktif.")
+    with c2:
+        st.success("**📈 Analisis Tren**\n\nPantau pergerakan deret waktu dan dekomposisi pilar penyusun ekonomi inklusif.")
+    with c3:
+        st.warning("**ℹ️ Metodologi**\n\nPelajari struktur, pilar, dan sub-pilar yang menyusun indeks pembangunan ini.")
 if menu == "🏠 Halaman Utama (Peta IPEI)":
     st.title("Peta Indeks Pembangunan Ekonomi Inklusif (IPEI)")
     st.markdown("Pemetaan skor tingkat wilayah untuk evaluasi pembangunan makroekonomi.")
