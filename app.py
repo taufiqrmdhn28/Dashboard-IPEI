@@ -19,16 +19,12 @@ st.set_page_config(
 # -----------------------------------------------------------------------------
 @st.cache_data
 def load_data():
-    # Load data Excel
     df = pd.read_excel("Data_Dummy_IPEI.xlsx")
+    # Biarkan sebagai angka (integer) agar cocok dengan JSON Anda
+    df['kodedaerah'] = df['kodedaerah'].astype(int) 
     
-    # Pastikan kodedaerah menjadi teks (string) agar bisa dicocokkan dengan JSON
-    df['kodedaerah'] = df['kodedaerah'].astype(str)
-    
-    # Load file GeoJSON
     with open("38_Provinsi_Indonesia_Kabupaten_Adjusted.json", "r", encoding="utf-8") as f:
         geojson = json.load(f)
-        
     return df, geojson
 
 df, geojson = load_data()
