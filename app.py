@@ -61,6 +61,9 @@ def load_data():
 
     return df, geojson
 
+# ---> PASTIKAN BARIS INI ADA, DAN POSISINYA PALING KIRI (TIDAK DI DALAM FUNGSI) <---
+df, geojson = load_data()
+
 # -----------------------------------------------------------------------------
 # 3. STRUKTUR MENU (SIDEBAR)
 # -----------------------------------------------------------------------------
