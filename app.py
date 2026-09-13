@@ -13,8 +13,19 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Kamus Nama Provinsi BPS untuk mempercantik Dropdown
+PROVINSI_MAP = {
+    "1100": "Aceh", "1200": "Sumatera Utara", "1300": "Sumatera Barat", "1400": "Riau", "1500": "Jambi",
+    "1600": "Sumatera Selatan", "1700": "Bengkulu", "1800": "Lampung", "1900": "Kep. Bangka Belitung", "2100": "Kep. Riau",
+    "3100": "DKI Jakarta", "3200": "Jawa Barat", "3300": "Jawa Tengah", "3400": "DI Yogyakarta", "3500": "Jawa Timur", "3600": "Banten",
+    "5100": "Bali", "5200": "Nusa Tenggara Barat", "5300": "Nusa Tenggara Timur",
+    "6100": "Kalimantan Barat", "6200": "Kalimantan Tengah", "6300": "Kalimantan Selatan", "6400": "Kalimantan Timur", "6500": "Kalimantan Utara",
+    "7100": "Sulawesi Utara", "7200": "Sulawesi Tengah", "7300": "Sulawesi Selatan", "7400": "Sulawesi Tenggara", "7500": "Gorontalo", "7600": "Sulawesi Barat",
+    "8100": "Maluku", "8200": "Maluku Utara", "9100": "Papua Barat", "9400": "Papua"
+}
+
 # -----------------------------------------------------------------------------
-# 2. FUNGSI PEMUATAN DATA (PERBAIKAN EKSTRAKSI GEOMETRI JSON)
+# 2. FUNGSI PEMUATAN DATA
 # -----------------------------------------------------------------------------
 @st.cache_data
 def load_data():
@@ -23,6 +34,10 @@ def load_data():
 
     # 2. Bersihkan kode daerah di Excel
     df['kodedaerah'] = df['kodedaerah'].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
+    
+    # [BARU] 2b. Buat kolom identitas provinsi induk (2 digit awal + "00")
+    df['kode_provinsi_induk'] = df['kodedaerah'].str[:2] + "00"
+    df['nama_provinsi'] = df['kode_provinsi_induk'].map(PROVINSI_MAP).fillna(df['kode_provinsi_induk'])
 
     # 3. Paksa kolom indikator menjadi numerik
     kolom_indikator = ['ipei', 'pilar1', 'pilar2', 'pilar3', 'sp11', 'sp12', 'sp13', 'sp21', 'sp22', 'sp31', 'sp32', 'sp33']
@@ -45,25 +60,17 @@ def load_data():
         if not geom_raw:
             continue
             
-        # --- BAGIAN PERBAIKAN UTAMA: EKSTRAKSI GEOMETRI ASLI ---
+        # Ekstraksi Geometri Asli
         try:
-            # Tahap 1: Ubah string JSON terluar menjadi dictionary
             geom_dict = json.loads(geom_raw)
-            
-            # Tahap 2: Gali ke dalam 'features' untuk mengambil 'geometry'
             if 'features' in geom_dict and len(geom_dict['features']) > 0:
                 geom_str = geom_dict['features'][0].get('geometry')
-                
-                # Tahap 3: Ubah lagi string di dalamnya menjadi dictionary geometri asli
                 actual_geom = json.loads(geom_str)
             else:
                 continue
         except Exception:
-            # Abaikan baris ini jika struktur koordinatnya rusak
             continue
-        # --------------------------------------------------------
 
-        # Gunakan 'code' untuk level Kabupaten/Kota
         kode = str(item.get('code', '')).replace('.0', '').strip()
 
         if kode and kode.lower() != 'none':
@@ -71,14 +78,14 @@ def load_data():
                 "type": "Feature",
                 "id": kode,
                 "properties": item,  
-                "geometry": actual_geom  # Masukkan geometri yang sudah bersih dan valid
+                "geometry": actual_geom  
             }
             geojson['features'].append(feature)
 
     return df, geojson
 
-# ---> PASTIKAN BARIS INI TETAP ADA (Jangan sampai terhapus atau menjorok ke dalam) <---
 df, geojson = load_data()
+
 # -----------------------------------------------------------------------------
 # 3. STRUKTUR MENU (SIDEBAR)
 # -----------------------------------------------------------------------------
@@ -97,7 +104,8 @@ if menu == "🏠 Halaman Utama (Peta IPEI)":
     st.title("Peta Indeks Pembangunan Ekonomi Inklusif (IPEI)")
     st.markdown("Pemetaan skor tingkat Kabupaten/Kota untuk evaluasi pembangunan makroekonomi wilayah.")
     
-    col1, col2 = st.columns(2)
+    # [BARU] Layout diubah menjadi 3 Kolom
+    col1, col2, col3 = st.columns(3)
     with col1:
         tahun_tersedia = [2025, 2024]
         selected_year = st.selectbox("📅 Pilih Tahun:", tahun_tersedia)
@@ -114,13 +122,21 @@ if menu == "🏠 Halaman Utama (Peta IPEI)":
         }
         selected_label = st.selectbox("🎯 Pilih Indikator yang Dipetakan:", list(indikator_dict.keys()))
         selected_kolom = indikator_dict[selected_label]
+
+    with col3:
+        # [BARU] Filter Wilayah untuk Auto-Zoom
+        list_prov = ["Semua Provinsi (Nasional)"] + sorted(df['nama_provinsi'].dropna().unique().tolist())
+        selected_prov = st.selectbox("📍 Fokus Wilayah (Zoom):", list_prov)
     
+    # [BARU] Logika Filtering Data Berdasarkan Tahun & Provinsi
     df_filtered = df[df['tahun'].astype(int) == selected_year].reset_index(drop=True)
     
+    if selected_prov != "Semua Provinsi (Nasional)":
+        df_filtered = df_filtered[df_filtered['nama_provinsi'] == selected_prov].reset_index(drop=True)
+    
     if df_filtered.empty:
-        st.warning(f"⚠️ Data untuk tahun {selected_year} tidak ditemukan di file Excel.")
+        st.warning(f"⚠️ Data untuk tahun {selected_year} di wilayah {selected_prov} tidak ditemukan.")
     else:
-        # PETA SUDAH MENGGUNAKAN ID INJEKSI (Parameter featureidkey dihilangkan)
         fig_map = px.choropleth_map(
             df_filtered,
             geojson=geojson,
@@ -128,8 +144,6 @@ if menu == "🏠 Halaman Utama (Peta IPEI)":
             color=selected_kolom,              
             color_continuous_scale="RdYlGn",  
             map_style="carto-positron",        
-            zoom=4,
-            center={"lat": -0.789, "lon": 113.921}, 
             opacity=0.8,
             hover_name='namadaerah',
             hover_data={
@@ -142,6 +156,14 @@ if menu == "🏠 Halaman Utama (Peta IPEI)":
             labels={selected_kolom: selected_label}
         )
         
+        # [BARU] Logika Auto-Zoom (fitbounds)
+        if selected_prov != "Semua Provinsi (Nasional)":
+            fig_map.update_geos(fitbounds="locations", visible=False)
+        else:
+            fig_map.update_layout(
+                map=dict(center={"lat": -0.789, "lon": 113.921}, zoom=4)
+            )
+            
         fig_map.update_layout(
             margin={"r":0,"t":0,"l":0,"b":0},
             coloraxis_colorbar=dict(
@@ -154,15 +176,7 @@ if menu == "🏠 Halaman Utama (Peta IPEI)":
         )
         
         st.plotly_chart(fig_map, use_container_width=True)
-        st.info(f"Visualisasi menampilkan sebaran **{selected_label}** untuk tahun **{selected_year}**.")
-        
-        # --- FITUR DEBUGGING (CEK KECOCOKAN DATA) ---
-        with st.expander("🛠️ Cek Sinkronisasi Data (Jika Peta Masih Polos)"):
-            sampel_excel = df_filtered['kodedaerah'].head(5).tolist()
-            sampel_json = [f['id'] for f in geojson['features'][:5]]
-            st.write(f"**Contoh Kode di Excel:** {sampel_excel}")
-            st.write(f"**Contoh Kode di JSON:** {sampel_json}")
-            st.caption("Pastikan format kedua kode di atas sama persis (contoh: sama-sama '1101'). Jika beda, peta tidak akan berwarna.")
+        st.info(f"Visualisasi menampilkan sebaran **{selected_label}** untuk wilayah **{selected_prov}** (Tahun {selected_year}).")
 
 elif menu == "📈 Analisis Pilar & Tren":
     st.title("Analisis Tren dan Pilar Ekonomi Inklusif")
