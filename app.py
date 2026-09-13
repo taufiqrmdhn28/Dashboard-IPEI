@@ -86,7 +86,7 @@ if menu == "🏠 Halaman Utama (Peta IPEI)":
                 df_filtered,
                 geojson=geojson,
                 locations='kodedaerah',           
-                featureidkey='properties.KODE',   # -> CEK CATATAN DI BAWAH JIKA MASIH ERROR
+                featureidkey='properties.kodedaerah_kabkota',   # -> CEK CATATAN DI BAWAH JIKA MASIH ERROR
                 color=selected_kolom,             
                 color_continuous_scale="RdYlGn",  
                 mapbox_style="carto-positron",
