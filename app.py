@@ -13,7 +13,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Kamus Nama Provinsi BPS untuk mempercantik Dropdown
+# Kamus Nama Provinsi BPS
 PROVINSI_MAP = {
     "1100": "Aceh", "1200": "Sumatera Utara", "1300": "Sumatera Barat", "1400": "Riau", "1500": "Jambi",
     "1600": "Sumatera Selatan", "1700": "Bengkulu", "1800": "Lampung", "1900": "Kep. Bangka Belitung", "2100": "Kep. Riau",
@@ -25,35 +25,36 @@ PROVINSI_MAP = {
 }
 
 # -----------------------------------------------------------------------------
-# 2. FUNGSI PEMUATAN DATA
+# 2. FUNGSI PEMUATAN DATA (SUDAH DIPERBAIKI UNTUK PROVINSI & KAB/KOTA)
 # -----------------------------------------------------------------------------
 @st.cache_data
 def load_data():
-    # 1. Load data Excel KHUSUS dari sheet "Kab_Kota"
-    df = pd.read_excel("Data_Dummy_IPEI.xlsx", sheet_name="Kab_Kota")
+    # 1. Load data Excel (Keduanya: Provinsi dan Kab/Kota)
+    df_provinsi = pd.read_excel("Data_Dummy_IPEI.xlsx", sheet_name="Provinsi")
+    df_kabkota = pd.read_excel("Data_Dummy_IPEI.xlsx", sheet_name="Kab_Kota")
 
-    # 2. Bersihkan kode daerah di Excel
-    df['kodedaerah'] = df['kodedaerah'].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
+    # 2. Bersihkan kode daerah di kedua DataFrame
+    df_provinsi['kodedaerah'] = df_provinsi['kodedaerah'].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
+    df_kabkota['kodedaerah'] = df_kabkota['kodedaerah'].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
     
-    # [BARU] 2b. Buat kolom identitas provinsi induk (2 digit awal + "00")
-    df['kode_provinsi_induk'] = df['kodedaerah'].str[:2] + "00"
-    df['nama_provinsi'] = df['kode_provinsi_induk'].map(PROVINSI_MAP).fillna(df['kode_provinsi_induk'])
+    # Buat kolom identitas provinsi induk untuk Kab/Kota
+    df_kabkota['kode_provinsi_induk'] = df_kabkota['kodedaerah'].str[:2] + "00"
+    df_kabkota['nama_provinsi'] = df_kabkota['kode_provinsi_induk'].map(PROVINSI_MAP).fillna(df_kabkota['kode_provinsi_induk'])
 
     # 3. Paksa kolom indikator menjadi numerik
     kolom_indikator = ['ipei', 'pilar1', 'pilar2', 'pilar3', 'sp11', 'sp12', 'sp13', 'sp21', 'sp22', 'sp31', 'sp32', 'sp33']
-    for col in kolom_indikator:
-        if col in df.columns:
-            df[col] = pd.to_numeric(df[col], errors='coerce')
+    for df_temp in [df_provinsi, df_kabkota]:
+        for col in kolom_indikator:
+            if col in df_temp.columns:
+                df_temp[col] = pd.to_numeric(df_temp[col], errors='coerce')
 
-    # 4. Load file Peta BPS
+    # 4. Load file Peta BPS (Menggunakan 1 file JSON untuk membuat 2 layer peta)
     with open("Peta_BPS_Kabupaten.json", "r", encoding="utf-8") as f:
         raw_data = json.load(f)
 
-    # 5. Transformasi format
-    geojson = {
-        "type": "FeatureCollection",
-        "features": []
-    }
+    # Siapkan penampung untuk JSON Provinsi dan Kab/Kota
+    geojson_provinsi = {"type": "FeatureCollection", "features": []}
+    geojson_kabkota = {"type": "FeatureCollection", "features": []}
 
     for item in raw_data:
         geom_raw = item.get('coordinates')
@@ -71,20 +72,24 @@ def load_data():
         except Exception:
             continue
 
-        kode = str(item.get('code', '')).replace('.0', '').strip()
+        kode_kab = str(item.get('code', '')).replace('.0', '').strip()
+        kode_prov = str(item.get('adm1_code', '')).replace('.0', '').strip()
 
-        if kode and kode.lower() != 'none':
-            feature = {
-                "type": "Feature",
-                "id": kode,
-                "properties": item,  
-                "geometry": actual_geom  
-            }
-            geojson['features'].append(feature)
+        # Masukkan ke JSON Kabupaten/Kota (ID = Kode Kab/Kota)
+        if kode_kab and kode_kab.lower() != 'none':
+            feature_kab = {"type": "Feature", "id": kode_kab, "properties": item, "geometry": actual_geom}
+            geojson_kabkota['features'].append(feature_kab)
+            
+        # Masukkan ke JSON Provinsi (ID = Kode Provinsi)
+        # Trik ini memungkinkan kita menggunakan 1 file JSON untuk peta level provinsi
+        if kode_prov and kode_prov.lower() != 'none':
+            feature_prov = {"type": "Feature", "id": kode_prov, "properties": item, "geometry": actual_geom}
+            geojson_provinsi['features'].append(feature_prov)
 
-    return df, geojson
+    return df_provinsi, df_kabkota, geojson_provinsi, geojson_kabkota
 
-df, geojson = load_data()
+# Memanggil keempat output dari load_data()
+df_provinsi, df_kabkota, geojson_provinsi, geojson_kabkota = load_data()
 
 # -----------------------------------------------------------------------------
 # 3. STRUKTUR MENU (SIDEBAR)
@@ -104,7 +109,6 @@ if menu == "🏠 Halaman Utama (Peta IPEI)":
     st.title("Peta Indeks Pembangunan Ekonomi Inklusif (IPEI)")
     st.markdown("Pemetaan skor tingkat wilayah untuk evaluasi pembangunan makroekonomi.")
 
-    # --- INISIALISASI SESSION STATE UNTUK KLIK PETA ---
     if "tingkat_peta" not in st.session_state:
         st.session_state.tingkat_peta = "nasional"
         st.session_state.provinsi_terpilih = None
@@ -113,10 +117,9 @@ if menu == "🏠 Halaman Utama (Peta IPEI)":
         st.session_state.tingkat_peta = "nasional"
         st.session_state.provinsi_terpilih = None
 
-    # --- FILTER TAHUN DAN INDIKATOR ---
     col1, col2 = st.columns(2)
     with col1:
-        tahun_tersedia = [2025, 2024]
+        tahun_tersedia = [2025, 2024] # Sesuaikan jika ada tahun lain
         selected_year = st.selectbox("📅 Pilih Tahun:", tahun_tersedia)
 
     with col2:
@@ -132,20 +135,18 @@ if menu == "🏠 Halaman Utama (Peta IPEI)":
         selected_label = st.selectbox("🎯 Pilih Indikator yang Dipetakan:", list(indikator_dict.keys()))
         selected_kolom = indikator_dict[selected_label]
 
-
     # =========================================================
-    # LOGIKA 1: TAMPILAN AWAL (PETA NASIONAL DENGAN BATAS PROVINSI)
+    # LOGIKA 1: TAMPILAN AWAL (PETA NASIONAL)
     # =========================================================
     if st.session_state.tingkat_peta == "nasional":
         st.info("💡 **Petunjuk:** Klik pada salah satu area Provinsi di peta untuk melihat detail Kabupaten/Kota di dalamnya.")
         
-        # Filter data provinsi (Pastikan kamu sudah membuat df_provinsi di load_data)
         df_prov_filtered = df_provinsi[df_provinsi['tahun'].astype(int) == selected_year].reset_index(drop=True)
 
         if not df_prov_filtered.empty:
             fig_nasional = px.choropleth_map(
                 df_prov_filtered,
-                geojson=geojson_provinsi, # Pastikan variabel ini memuat JSON Provinsi
+                geojson=geojson_provinsi, 
                 locations='kodedaerah',            
                 color=selected_kolom,              
                 color_continuous_scale="RdYlGn",  
@@ -159,37 +160,34 @@ if menu == "🏠 Halaman Utama (Peta IPEI)":
 
             fig_nasional.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
 
-            # Tampilkan peta dan tangkap event klik dengan on_select="rerun"
             event = st.plotly_chart(fig_nasional, use_container_width=True, on_select="rerun", selection_mode="points", key="peta_awal")
             
-            # Jika ada provinsi yang diklik, proses id-nya
             if event and event.get("selection") and event["selection"].get("points"):
                 kode_prov_diklik = event["selection"]["points"][0]["location"]
                 
-                # Simpan ke session state dan muat ulang halaman
                 st.session_state.provinsi_terpilih = kode_prov_diklik
                 st.session_state.tingkat_peta = "provinsi"
                 st.rerun()
 
     # =========================================================
-    # LOGIKA 2: TAMPILAN ZOOM (PETA KABUPATEN DI DALAM 1 PROVINSI)
+    # LOGIKA 2: TAMPILAN ZOOM (PETA KABUPATEN)
     # =========================================================
     elif st.session_state.tingkat_peta == "provinsi":
-        st.button("⬅️ Kembali ke Peta Nasional", on_click=reset_peta)
+        # Ambil nama provinsi dari kamus untuk judul yang lebih rapi
+        nama_prov = PROVINSI_MAP.get(st.session_state.provinsi_terpilih, st.session_state.provinsi_terpilih)
         
-        # Filter data kabupaten untuk tahun terpilih
+        st.button("⬅️ Kembali ke Peta Nasional", on_click=reset_peta)
+        st.markdown(f"### 📍 Peta Detail: Provinsi {nama_prov}")
+        
         df_kab_filtered = df_kabkota[df_kabkota['tahun'].astype(int) == selected_year].copy()
         
-        # Ekstrak 2 digit pertama dari kode kabupaten untuk mencocokkan dengan kode provinsi
-        df_kab_filtered['kode_prov'] = df_kab_filtered['kodedaerah'].astype(str).str[:2] + "00"
-        
         # Saring hanya kabupaten yang berada di provinsi yang diklik
-        df_kab_zoom = df_kab_filtered[df_kab_filtered['kode_prov'] == str(st.session_state.provinsi_terpilih)].reset_index(drop=True)
+        df_kab_zoom = df_kab_filtered[df_kab_filtered['kode_provinsi_induk'] == str(st.session_state.provinsi_terpilih)].reset_index(drop=True)
         
         if not df_kab_zoom.empty:
             fig_zoom = px.choropleth_map(
                 df_kab_zoom,
-                geojson=geojson_kabkota, # Pastikan variabel ini memuat JSON Kabupaten
+                geojson=geojson_kabkota, 
                 locations='kodedaerah',            
                 color=selected_kolom,              
                 color_continuous_scale="RdYlGn",  
@@ -199,7 +197,6 @@ if menu == "🏠 Halaman Utama (Peta IPEI)":
                 labels={selected_kolom: selected_label}
             )
 
-            # Fitur Auto-Zoom berdasarkan lokasi yang difilter
             fig_zoom.update_geos(fitbounds="locations", visible=False)
             fig_zoom.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
 
@@ -207,17 +204,22 @@ if menu == "🏠 Halaman Utama (Peta IPEI)":
         else:
             st.warning("Data Kabupaten/Kota untuk Provinsi ini belum tersedia.")
 
+
+# =============================================================================
+# MENU: ANALISIS PILAR & TREN (Menggunakan df_kabkota)
+# =============================================================================
 elif menu == "📈 Analisis Pilar & Tren":
     st.title("Analisis Tren dan Pilar Ekonomi Inklusif")
     st.markdown("Tinjauan deret waktu (*time-series*) dan dekomposisi pilar penyusun IPEI.")
     
     col1, col2 = st.columns(2)
     with col1:
-        daerah_list = df['namadaerah'].dropna().unique().tolist()
+        # Kita gunakan data kabupaten kota untuk analisis tren
+        daerah_list = df_kabkota['namadaerah'].dropna().unique().tolist()
         daerah_list.sort()
         selected_daerah = st.selectbox("Pilih Kabupaten/Kota:", daerah_list)
     
-    df_daerah = df[df['namadaerah'] == selected_daerah].sort_values('tahun')
+    df_daerah = df_kabkota[df_kabkota['namadaerah'] == selected_daerah].sort_values('tahun')
     
     if not df_daerah.empty:
         st.subheader(f"Tren IPEI - {selected_daerah}")
