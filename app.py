@@ -12,7 +12,7 @@ st.set_page_config(
     page_title="Dashboard Indeks Pembangunan Ekonomi Inklusif (IPEI)",
     page_icon="📊",
     layout="wide",
-    initial_sidebar_state="collapsed" # Menyembunyikan sidebar bawaan
+    initial_sidebar_state="collapsed"
 )
 
 # -----------------------------------------------------------------------------
@@ -65,11 +65,7 @@ def load_data():
 
     # --- C. PROSES GEOPANDAS (SIMPLIFY & DISSOLVE) ---
     gdf_kab = gpd.GeoDataFrame.from_features(geojson_kabkota)
-    
-    # Meringankan loading peta
     gdf_kab['geometry'] = gdf_kab['geometry'].simplify(tolerance=0.002, preserve_topology=True)
-    
-    # Leburkan batas kabupaten menjadi provinsi
     gdf_prov = gdf_kab.dissolve(by='kode_provinsi').reset_index()
 
     geojson_prov_dict = json.loads(gdf_prov.to_json())
@@ -87,44 +83,84 @@ df_provinsi, df_kabkota, geojson_provinsi, geojson_kabkota, gdf_provinsi = load_
 
 
 # -----------------------------------------------------------------------------
-# 3. KUSTOMISASI CSS & HEADER (MENGGANTIKAN SIDEBAR)
+# 3. KUSTOMISASI CSS UI & MENU NAVIGASI HEADER
 # -----------------------------------------------------------------------------
-# Menyembunyikan elemen bawaan Streamlit
 st.markdown("""
     <style>
+        /* Sembunyikan elemen bawaan Streamlit */
         [data-testid="collapsedControl"] {display: none;}
         #MainMenu {visibility: hidden;}
         header {visibility: hidden;}
         .block-container {
-            padding-top: 1rem;
+            padding-top: 1.5rem;
             padding-bottom: 1rem;
+            max-width: 95%;
+        }
+
+        /* --- SULAP RADIO BUTTON MENJADI MENU TAB MODERN --- */
+        /* 1. Sembunyikan bulatan radio */
+        div[role="radiogroup"] label div:first-child {
+            display: none !important;
+        }
+        /* 2. Tata letak menu menyamping dengan jarak */
+        div[role="radiogroup"] {
+            display: flex;
+            flex-direction: row;
+            gap: 40px;
+            margin-top: 12px;
+            justify-content: flex-start;
+        }
+        /* 3. Desain teks menu saat TIDAK DIPILIH (Abu-abu tipis) */
+        div[role="radiogroup"] label {
+            cursor: pointer;
+            padding-bottom: 8px;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+        div[role="radiogroup"] label p {
+            color: #9e9e9e !important;
+            font-size: 1.15rem;
+            font-weight: 500;
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        /* 4. Efek saat kursor diarahkan (Hover) */
+        div[role="radiogroup"] label:hover p {
+            color: #0b5394 !important;
+        }
+        /* 5. Desain teks menu saat DIPILIH (Biru tebal + garis bawah) */
+        div[role="radiogroup"] label[data-checked="true"] {
+            border-bottom: 3px solid #0b5394 !important;
+        }
+        div[role="radiogroup"] label[data-checked="true"] p {
+            color: #0b5394 !important;
+            font-weight: 700;
         }
     </style>
 """, unsafe_allow_html=True)
 
-# Membuat Header Khusus: Kolom kiri untuk logo, kolom kanan untuk navigasi
+# Membuat Header Khusus: Logo Bappenas & Menu Navigasi
 col_logo, col_menu = st.columns([1, 4])
 
 with col_logo:
-    # Menggunakan HTML untuk memanggil logo agar ukurannya lebih mudah diatur
-    # Pastikan file logo_bappenas.png berada di folder yang sama
     try:
         import base64
         with open("logo_bappenas.png", "rb") as image_file:
             encoded_string = base64.b64encode(image_file.read()).decode()
-        st.markdown(f'<img src="data:image/png;base64,{encoded_string}" width="220" style="margin-top: 5px;">', unsafe_allow_html=True)
+        st.markdown(f'<img src="data:image/png;base64,{encoded_string}" width="250" style="margin-top: 5px;">', unsafe_allow_html=True)
     except FileNotFoundError:
-        st.markdown("**Kementerian PPN/Bappenas**")
+        st.markdown("<h4 style='color:#0b5394; margin-top:10px;'>Kementerian PPN/Bappenas</h4>", unsafe_allow_html=True)
 
 with col_menu:
+    # Nama tab sudah tanpa ikon emoji
     menu = st.radio(
         "",
-        ("🏠 Beranda", "🗺️ Peta IPEI", "📈 Analisis Pilar & Tren", "ℹ️ Tentang IPEI"),
+        ("Beranda", "Peta IPEI", "Analisis Pilar & Tren", "Tentang IPEI"),
         horizontal=True,
         label_visibility="collapsed"
     )
 
-st.markdown("---")
+st.markdown("<hr style='margin-top: 0; margin-bottom: 30px; border-top: 1px solid #e0e0e0;'>", unsafe_allow_html=True)
 
 
 # -----------------------------------------------------------------------------
@@ -132,36 +168,38 @@ st.markdown("---")
 # -----------------------------------------------------------------------------
 
 # =========================================================
-# HALAMAN BERANDA
+# HALAMAN BERANDA (FULL BANNER)
 # =========================================================
-if menu == "🏠 Beranda":
-    
-    # Gunakan HTML dan CSS untuk membuat Hero Banner yang elegan
+if menu == "Beranda":
+    # Hero Banner mengambil layar penuh (tanpa fitur bawah)
     hero_html = """
     <style>
     .hero-container {
-        /* Gradien biru transparan dipadukan dengan gambar latar */
-        background-image: linear-gradient(to right, rgba(10, 54, 104, 0.95), rgba(30, 136, 229, 0.6)), url('https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=2000&auto=format&fit=crop');
+        /* Gradien biru dipadukan dengan gambar satelit/peta latar belakang */
+        background-image: linear-gradient(to right, rgba(13, 71, 161, 0.95), rgba(30, 136, 229, 0.4)), url('https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=2000&auto=format&fit=crop');
         background-size: cover;
         background-position: center;
-        border-radius: 15px;
-        padding: 80px 50px;
+        border-radius: 12px;
+        padding: 100px 60px;
         color: white;
-        margin-bottom: 30px;
-        box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+        min-height: 70vh; /* Membuat banner lebih tinggi memakan layar */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
     }
     .hero-title {
-        font-size: 3.2rem;
+        font-size: 3.8rem;
         font-weight: 800;
-        margin-bottom: 20px;
-        line-height: 1.2;
+        margin-bottom: 25px;
+        line-height: 1.1;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
     .hero-subtitle {
-        font-size: 1.2rem;
+        font-size: 1.3rem;
         font-weight: 400;
-        max-width: 800px;
-        line-height: 1.6;
+        max-width: 900px;
+        line-height: 1.7;
         opacity: 0.95;
     }
     </style>
@@ -169,28 +207,18 @@ if menu == "🏠 Beranda":
     <div class="hero-container">
         <div class="hero-title">Indeks Pembangunan Ekonomi Inklusif (IPEI)</div>
         <div class="hero-subtitle">
-            Platform visualisasi interaktif untuk mengevaluasi pemerataan pembangunan dan inklusivitas makroekonomi daerah. 
+            Platform visualisasi interaktif untuk mengevaluasi pemerataan pembangunan dan inklusivitas makroekonomi daerah.<br><br>
             Dasbor ini dirancang untuk mendukung penguatan <i>evidence-based planning</i> dalam pengembangan model pembangunan di seluruh wilayah Indonesia.
         </div>
     </div>
     """
-    
     st.markdown(hero_html, unsafe_allow_html=True)
-    
-    st.markdown("### 📌 Fitur Utama Dasbor")
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        st.info("**🗺️ Peta Spasial**\n\nEksplorasi sebaran skor IPEI tingkat Provinsi hingga Kabupaten/Kota secara interaktif.")
-    with c2:
-        st.success("**📈 Analisis Tren**\n\nPantau pergerakan deret waktu dan dekomposisi pilar penyusun ekonomi inklusif.")
-    with c3:
-        st.warning("**ℹ️ Metodologi**\n\nPelajari struktur, pilar, dan sub-pilar yang menyusun indeks pembangunan ini.")
 
 
 # =========================================================
 # HALAMAN PETA IPEI
 # =========================================================
-elif menu == "🗺️ Peta IPEI":
+elif menu == "Peta IPEI":
     st.title("Peta Indeks Pembangunan Ekonomi Inklusif (IPEI)")
     st.markdown("Pemetaan skor tingkat wilayah untuk evaluasi pembangunan makroekonomi.")
 
@@ -221,10 +249,8 @@ elif menu == "🗺️ Peta IPEI":
 
     st.markdown("---")
 
-    # --- Peta Nasional ---
     if st.session_state.tingkat_peta == "nasional":
         st.info("💡 **Petunjuk:** Klik pada salah satu area Provinsi di peta untuk melihat detail Kabupaten/Kota di dalamnya.")
-        
         df_prov_filtered = df_provinsi[df_provinsi['tahun'].astype(int) == selected_year].reset_index(drop=True)
 
         if not df_prov_filtered.empty:
@@ -260,10 +286,8 @@ elif menu == "🗺️ Peta IPEI":
                 st.session_state.tingkat_peta = "provinsi"
                 st.rerun()
 
-    # --- Peta Zoom Kabupaten ---
     elif st.session_state.tingkat_peta == "provinsi":
         st.button("⬅️ Kembali ke Peta Nasional", on_click=reset_peta)
-        
         df_kab_filtered = df_kabkota[df_kabkota['tahun'].astype(int) == selected_year].copy()
         df_kab_filtered['kode_prov'] = df_kab_filtered['kodedaerah'].astype(str).str[:2] + "00"
         df_kab_zoom = df_kab_filtered[df_kab_filtered['kode_prov'] == str(st.session_state.provinsi_terpilih)].reset_index(drop=True)
@@ -306,14 +330,13 @@ elif menu == "🗺️ Peta IPEI":
                     margin={"r":0,"t":0,"l":0,"b":0},
                     coloraxis_colorbar=dict(title="Nilai", yanchor="top", y=1, ticks="outside")
                 )
-
             st.plotly_chart(fig_zoom, use_container_width=True, key="peta_zoom")
 
 
 # =========================================================
 # HALAMAN ANALISIS TREN
 # =========================================================
-elif menu == "📈 Analisis Pilar & Tren":
+elif menu == "Analisis Pilar & Tren":
     st.title("Analisis Tren dan Pilar Ekonomi Inklusif")
     col1, col2 = st.columns(2)
     with col1:
@@ -339,9 +362,8 @@ elif menu == "📈 Analisis Pilar & Tren":
 # =========================================================
 # HALAMAN TENTANG IPEI
 # =========================================================
-elif menu == "ℹ️ Tentang IPEI":
+elif menu == "Tentang IPEI":
     st.title("Tentang Indeks Pembangunan Ekonomi Inklusif")
-    
     st.markdown("""
     <style>
     .hero-banner-info {
@@ -405,14 +427,14 @@ elif menu == "ℹ️ Tentang IPEI":
 
     st.markdown("""
     <div class="hero-banner-info">
-        <div class="hero-title-info">🌍 Indeks Pembangunan Ekonomi Inklusif (IPEI)</div>
+        <div class="hero-title-info">Indeks Pembangunan Ekonomi Inklusif (IPEI)</div>
         <div class="hero-text-info">
             Indeks Pembangunan Ekonomi Inklusif (IPEI) merupakan alat ukur komprehensif untuk memantau tingkat inklusivitas pembangunan ekonomi suatu wilayah. Indeks ini dirancang untuk memastikan bahwa pertumbuhan ekonomi berjalan selaras dengan pemerataan pendapatan, pengurangan kemiskinan, serta perluasan akses dan kesempatan bagi seluruh lapisan masyarakat.
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("### 🏛️ Komponen Pembentuk IPEI")
+    st.markdown("### Komponen Pembentuk IPEI")
     st.markdown("Struktur penilaian IPEI didasarkan pada **3 (tiga) pilar utama** dan **8 (delapan) sub-pilar** penggerak, yaitu:")
     st.write("") 
 
@@ -421,7 +443,7 @@ elif menu == "ℹ️ Tentang IPEI":
     with col1:
         st.markdown("""
         <div class="card-container">
-            <div class="card-title">📈 Pilar 1:<br>Pertumbuhan & Perkembangan Ekonomi</div>
+            <div class="card-title">Pilar 1:<br>Pertumbuhan & Perkembangan Ekonomi</div>
             <div class="sub-item"><span class="sub-icon">📊</span> Sub-Pilar 1.1: Pertumbuhan Ekonomi</div>
             <div class="sub-item"><span class="sub-icon">💼</span> Sub-Pilar 1.2: Kesempatan Kerja</div>
             <div class="sub-item"><span class="sub-icon">🏗️</span> Sub-Pilar 1.3: Infrastruktur</div>
@@ -431,7 +453,7 @@ elif menu == "ℹ️ Tentang IPEI":
     with col2:
         st.markdown("""
         <div class="card-container">
-            <div class="card-title">⚖️ Pilar 2:<br>Pemerataan Pendapatan & Pengurangan Kemiskinan</div>
+            <div class="card-title">Pilar 2:<br>Pemerataan Pendapatan & Pengurangan Kemiskinan</div>
             <div class="sub-item"><span class="sub-icon">📉</span> Sub-Pilar 2.1: Ketimpangan</div>
             <div class="sub-item"><span class="sub-icon">🛡️</span> Sub-Pilar 2.2: Kemiskinan</div>
         </div>
@@ -440,7 +462,7 @@ elif menu == "ℹ️ Tentang IPEI":
     with col3:
         st.markdown("""
         <div class="card-container">
-            <div class="card-title">🤝 Pilar 3:<br>Perluasan Akses & Kesempatan</div>
+            <div class="card-title">Pilar 3:<br>Perluasan Akses & Kesempatan</div>
             <div class="sub-item"><span class="sub-icon">🎓</span> Sub-Pilar 3.1: Kapabilitas Manusia</div>
             <div class="sub-item"><span class="sub-icon">🏥</span> Sub-Pilar 3.2: Infrastruktur Dasar</div>
             <div class="sub-item"><span class="sub-icon">💳</span> Sub-Pilar 3.3: Keuangan Inklusif</div>
