@@ -12,7 +12,7 @@ st.set_page_config(
     page_title="Dashboard Indeks Pembangunan Ekonomi Inklusif (IPEI)",
     page_icon="📊",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed" # Menyembunyikan sidebar bawaan
 )
 
 # -----------------------------------------------------------------------------
@@ -54,7 +54,7 @@ def load_data():
                 "type": "Feature",
                 "id": kode_kab, 
                 "properties": {
-                    "kode_kabupaten": kode_kab, # <-- INI KUNCI UTAMA AGAR WARNA KABUPATEN MUNCUL
+                    "kode_kabupaten": kode_kab,
                     "kode_provinsi": kode_prov, 
                     "namadaerah": item.get('name', '')
                 },  
@@ -66,7 +66,7 @@ def load_data():
     # --- C. PROSES GEOPANDAS (SIMPLIFY & DISSOLVE) ---
     gdf_kab = gpd.GeoDataFrame.from_features(geojson_kabkota)
     
-    # Meringankan loading peta (memotong ukuran file 60% tapi garis batas tetap mulus/proper)
+    # Meringankan loading peta
     gdf_kab['geometry'] = gdf_kab['geometry'].simplify(tolerance=0.002, preserve_topology=True)
     
     # Leburkan batas kabupaten menjadi provinsi
@@ -78,7 +78,7 @@ def load_data():
 
     geojson_kab_dict = json.loads(gdf_kab.to_json())
     for feature in geojson_kab_dict['features']:
-        feature['id'] = feature['properties']['kode_kabupaten'] # <-- KEMBALIKAN ID YANG HILANG DI GEOPANDAS
+        feature['id'] = feature['properties']['kode_kabupaten']
 
     return df_provinsi, df_kabkota, geojson_prov_dict, geojson_kab_dict, gdf_prov
 
@@ -185,7 +185,12 @@ if menu == "🏠 Beranda":
         st.success("**📈 Analisis Tren**\n\nPantau pergerakan deret waktu dan dekomposisi pilar penyusun ekonomi inklusif.")
     with c3:
         st.warning("**ℹ️ Metodologi**\n\nPelajari struktur, pilar, dan sub-pilar yang menyusun indeks pembangunan ini.")
-if menu == "🏠 Halaman Utama (Peta IPEI)":
+
+
+# =========================================================
+# HALAMAN PETA IPEI
+# =========================================================
+elif menu == "🗺️ Peta IPEI":
     st.title("Peta Indeks Pembangunan Ekonomi Inklusif (IPEI)")
     st.markdown("Pemetaan skor tingkat wilayah untuk evaluasi pembangunan makroekonomi.")
 
@@ -216,9 +221,7 @@ if menu == "🏠 Halaman Utama (Peta IPEI)":
 
     st.markdown("---")
 
-    # =========================================================
-    # TAMPILAN AWAL (NASIONAL)
-    # =========================================================
+    # --- Peta Nasional ---
     if st.session_state.tingkat_peta == "nasional":
         st.info("💡 **Petunjuk:** Klik pada salah satu area Provinsi di peta untuk melihat detail Kabupaten/Kota di dalamnya.")
         
@@ -257,9 +260,7 @@ if menu == "🏠 Halaman Utama (Peta IPEI)":
                 st.session_state.tingkat_peta = "provinsi"
                 st.rerun()
 
-    # =========================================================
-    # TAMPILAN ZOOM (KABUPATEN DI DALAM 1 PROVINSI)
-    # =========================================================
+    # --- Peta Zoom Kabupaten ---
     elif st.session_state.tingkat_peta == "provinsi":
         st.button("⬅️ Kembali ke Peta Nasional", on_click=reset_peta)
         
@@ -308,9 +309,10 @@ if menu == "🏠 Halaman Utama (Peta IPEI)":
 
             st.plotly_chart(fig_zoom, use_container_width=True, key="peta_zoom")
 
-# -----------------------------------------------------------------------------
-# MENU LAIN (ANALISIS & TENTANG IPEI) TETAP SAMA DENGAN SEBELUMNYA
-# -----------------------------------------------------------------------------
+
+# =========================================================
+# HALAMAN ANALISIS TREN
+# =========================================================
 elif menu == "📈 Analisis Pilar & Tren":
     st.title("Analisis Tren dan Pilar Ekonomi Inklusif")
     col1, col2 = st.columns(2)
@@ -333,11 +335,16 @@ elif menu == "📈 Analisis Pilar & Tren":
             fig_bar = px.bar(df_chart_pilar, x='Pilar', y='Skor', color='Pilar', title=f"Skor per Pilar (Tahun {tahun_terakhir})")
             st.plotly_chart(fig_bar, use_container_width=True)
 
+
+# =========================================================
+# HALAMAN TENTANG IPEI
+# =========================================================
 elif menu == "ℹ️ Tentang IPEI":
-    # 1. Injeksi CSS untuk mendesain UI bergaya modern (Banner & Cards)
+    st.title("Tentang Indeks Pembangunan Ekonomi Inklusif")
+    
     st.markdown("""
     <style>
-    .hero-banner {
+    .hero-banner-info {
         background: linear-gradient(135deg, #0b5394 0%, #3d85c6 100%);
         padding: 40px;
         border-radius: 15px;
@@ -345,13 +352,13 @@ elif menu == "ℹ️ Tentang IPEI":
         margin-bottom: 30px;
         box-shadow: 0 10px 20px rgba(0,0,0,0.1);
     }
-    .hero-title {
+    .hero-title-info {
         font-size: 2.2em;
         font-weight: 700;
         margin-bottom: 15px;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
-    .hero-text {
+    .hero-text-info {
         font-size: 1.15em;
         line-height: 1.6;
         margin-bottom: 0;
@@ -396,11 +403,10 @@ elif menu == "ℹ️ Tentang IPEI":
     </style>
     """, unsafe_allow_html=True)
 
-    # 2. Membuat Hero Banner (Bagian Atas)
     st.markdown("""
-    <div class="hero-banner">
-        <div class="hero-title">🌍 Indeks Pembangunan Ekonomi Inklusif (IPEI)</div>
-        <div class="hero-text">
+    <div class="hero-banner-info">
+        <div class="hero-title-info">🌍 Indeks Pembangunan Ekonomi Inklusif (IPEI)</div>
+        <div class="hero-text-info">
             Indeks Pembangunan Ekonomi Inklusif (IPEI) merupakan alat ukur komprehensif untuk memantau tingkat inklusivitas pembangunan ekonomi suatu wilayah. Indeks ini dirancang untuk memastikan bahwa pertumbuhan ekonomi berjalan selaras dengan pemerataan pendapatan, pengurangan kemiskinan, serta perluasan akses dan kesempatan bagi seluruh lapisan masyarakat.
         </div>
     </div>
@@ -408,9 +414,8 @@ elif menu == "ℹ️ Tentang IPEI":
 
     st.markdown("### 🏛️ Komponen Pembentuk IPEI")
     st.markdown("Struktur penilaian IPEI didasarkan pada **3 (tiga) pilar utama** dan **8 (delapan) sub-pilar** penggerak, yaitu:")
-    st.write("") # Memberi sedikit spasi
+    st.write("") 
 
-    # 3. Membuat Layout 3 Kolom untuk Kartu Pilar
     col1, col2, col3 = st.columns(3)
 
     with col1:
