@@ -14,7 +14,7 @@ st.set_page_config(
 )
 
 # -----------------------------------------------------------------------------
-# 2. FUNGSI PEMUATAN DATA (TAKTIK INJEKSI ID)
+# 2. FUNGSI PEMUATAN DATA (PERBAIKAN STRUKTUR JSON)
 # -----------------------------------------------------------------------------
 @st.cache_data
 def load_data():
@@ -30,25 +30,35 @@ def load_data():
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors='coerce')
     
-    # Load file GeoJSON menggunakan peta BPS
+    # 3. Load file Peta BPS
     with open("Peta_BPS_Kabupaten.json", "r", encoding="utf-8") as f:
-        geojson = json.load(f)
+        raw_data = json.load(f)
         
-    # 3. INJEKSI ID: Tempelkan kode langsung sebagai 'id' utama di JSON
-    features_valid = []
-    for feature in geojson.get('features', []):
-        if not feature.get('geometry'):
+    # 4. Transformasi format List menjadi GeoJSON FeatureCollection baku
+    geojson = {
+        "type": "FeatureCollection",
+        "features": []
+    }
+    
+    # Iterasi langsung karena raw_data adalah sebuah List
+    for item in raw_data:
+        geom = item.get('coordinates')
+        if not geom:
             continue
             
-        props = feature.get('properties', {})
-        # MENGGUNAKAN 'adm1_code' SESUAI KOREKSI UNTUK LEVEL KABUPATEN/KOTA
-        kode = str(props.get('adm1_code', '')).replace('.0', '').strip()
+        # Menggunakan 'adm1_code' sesuai instruksi
+        kode = str(item.get('adm1_code', '')).replace('.0', '').strip()
         
         if kode and kode.lower() != 'none':
-            feature['id'] = kode  # INI KUNCI UTAMANYA
-            features_valid.append(feature)
+            # Rakit ulang menjadi Feature standar dengan injeksi ID
+            feature = {
+                "type": "Feature",
+                "id": kode,
+                "properties": item,  # Simpan semua atribut asli di dalam properties
+                "geometry": geom
+            }
+            geojson['features'].append(feature)
             
-    geojson['features'] = features_valid
     return df, geojson
 
 df, geojson = load_data()
