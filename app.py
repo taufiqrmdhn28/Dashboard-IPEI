@@ -30,8 +30,8 @@ def load_data():
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors='coerce')
     
-    # Load file GeoJSON
-    with open("38_Provinsi_Indonesia_Kabupaten_Adjusted.json", "r", encoding="utf-8") as f:
+    # Load file GeoJSON menggunakan peta BPS
+    with open("Peta_BPS_Kabupaten.json", "r", encoding="utf-8") as f:
         geojson = json.load(f)
         
     # 3. INJEKSI ID: Tempelkan kode langsung sebagai 'id' utama di JSON
@@ -41,8 +41,8 @@ def load_data():
             continue
             
         props = feature.get('properties', {})
-        # Ambil kodenya dan bersihkan
-        kode = str(props.get('kodedaerah_kabkota', '')).replace('.0', '').strip()
+        # MENGGUNAKAN 'adm1_code' SESUAI KOREKSI UNTUK LEVEL KABUPATEN/KOTA
+        kode = str(props.get('adm1_code', '')).replace('.0', '').strip()
         
         if kode and kode.lower() != 'none':
             feature['id'] = kode  # INI KUNCI UTAMANYA
@@ -98,10 +98,10 @@ if menu == "🏠 Halaman Utama (Peta IPEI)":
         fig_map = px.choropleth_map(
             df_filtered,
             geojson=geojson,
-            locations='kodedaerah',           
-            color=selected_kolom,             
+            locations='kodedaerah',            
+            color=selected_kolom,              
             color_continuous_scale="RdYlGn",  
-            map_style="carto-positron",       
+            map_style="carto-positron",        
             zoom=4,
             center={"lat": -0.789, "lon": 113.921}, 
             opacity=0.8,
