@@ -378,51 +378,23 @@ with tab_peta:
 with tab_analisis:
     st.markdown("""
         <style>
-        .analytics-header {
-            margin-bottom: 25px;
-            margin-top: 10px;
-        }
-        .analytics-title {
-            color: #083c6b;
-            font-weight: 800;
-            font-size: 2.2rem;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin-bottom: 8px;
-        }
-        .analytics-subtitle {
-            color: #4a5568;
-            font-size: 1.1rem;
-            line-height: 1.6;
-        }
-        .chart-card {
-            background-color: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 16px;
-            padding: 25px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.04);
-            margin-bottom: 25px;
-        }
-        .progress-label {
-            font-size: 0.95rem;
-            color: #475569;
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-        .progress-value {
-            font-size: 1rem;
-            color: #0f172a;
-            font-weight: 800;
-        }
+        .analytics-header { margin-bottom: 25px; margin-top: 10px; }
+        .analytics-title { color: #083c6b; font-weight: 800; font-size: 2.2rem; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin-bottom: 8px; }
+        .analytics-subtitle { color: #4a5568; font-size: 1.1rem; line-height: 1.6; }
+        .chart-card { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); margin-bottom: 25px; }
+        /* Kustomisasi scrollbar untuk tabel historis */
+        .history-table::-webkit-scrollbar { width: 6px; }
+        .history-table::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
         </style>
         <div class="analytics-header">
             <div class="analytics-title">Analisis Tren & Komposisi Pilar</div>
             <div class="analytics-subtitle">
-                Pantau pergerakan deret waktu (*time-series*) dan bedah dekomposisi pilar penyusun ekonomi inklusif secara mendalam.
+                Pantau pergerakan deret waktu (*time-series*) dan bedah dekomposisi pilar penyusun ekonomi inklusif secara mendalam dari tahun 2011 - 2025.
             </div>
         </div>
     """, unsafe_allow_html=True)
 
-    # Menyiapkan struktur hierarki indikator
+    # Hierarki Indikator (Otomatis mengubah sub-komponen saat dropdown dipilih)
     hierarki_indikator = {
         "Skor Total IPEI": {
             "kolom": "ipei",
@@ -457,44 +429,67 @@ with tab_analisis:
         }
     }
 
-    # Membuat Sub-Tab di dalam Tab Analisis
     subtab_prov, subtab_kab = st.tabs(["🏛️ Tingkat Provinsi", "🏙️ Tingkat Kabupaten/Kota"])
 
-    # --- FUNGSI HELPER UNTUK GRAFIK & PROGRESS BAR ---
+    # --- FUNGSI HELPER GRAFIK AREA ---
     def buat_grafik_area(df, y_col, judul):
         fig = px.area(df, x='tahun', y=y_col, markers=True)
         fig.update_traces(
             line_color='#0ea5e9', 
-            fillcolor='rgba(14, 165, 233, 0.15)', # Efek arsiran transparan di bawah garis
+            fillcolor='rgba(14, 165, 233, 0.15)',
             marker=dict(size=8, color='#0284c7', line=dict(width=2, color='white'))
         )
         fig.update_layout(
             margin=dict(l=10, r=10, t=20, b=10),
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
             xaxis=dict(showgrid=False, title="", tickmode='linear', dtick=1),
             yaxis=dict(showgrid=True, gridcolor='#f1f5f9', title="", rangemode='tozero'),
-            height=350,
-            hovermode="x unified"
+            height=350, hovermode="x unified"
         )
         return fig
 
-    def render_progress_bar(label, nilai, nilai_maks=10):
-        # Mencegah error jika nilai kosong/NaN
-        if pd.isna(nilai): nilai = 0
-        persentase = min((nilai / nilai_maks) * 100, 100)
-        html = f"""
-        <div style="margin-bottom: 15px;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-end;">
-                <div class="progress-label">{label}</div>
-                <div class="progress-value">{nilai:.2f}</div>
-            </div>
-            <div style="width: 100%; background-color: #f1f5f9; border-radius: 8px; height: 10px; overflow: hidden; margin-top: 4px;">
-                <div style="background: linear-gradient(90deg, #0ea5e9, #38bdf8); width: {persentase}%; height: 100%; border-radius: 8px; transition: width 1s ease-in-out;"></div>
-            </div>
-        </div>
-        """
-        st.markdown(html, unsafe_allow_html=True)
+    # --- FUNGSI HELPER TABEL HISTORIS PROGRESS BAR ---
+    def buat_tabel_historis(df, komponen):
+        komponen_cols = list(komponen.values())
+        max_val_data = df[komponen_cols].max().max() if not df.empty else 10
+        max_val_bar = max(10, max_val_data * 1.15) # Buffer visual 15%
+
+        html = '<div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); margin-top: 5px;">'
+        html += '<div style="margin-bottom:15px; font-weight:800; color:#083c6b; font-size:1.15rem;">Rincian Historis Komposisi Penyusun (2011 - 2025)</div>'
+
+        # Baris Header Kolom
+        html += '<div style="display: flex; align-items: flex-end; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 5px;">'
+        html += '<div style="width: 70px; font-weight: 700; color: #475569; font-size: 0.85rem;">Tahun</div>'
+        for label in komponen.keys():
+            html += f'<div style="flex: 1; padding: 0 15px; font-weight: 700; color: #475569; font-size: 0.85rem; line-height: 1.3;">{label}</div>'
+        html += '</div>'
+
+        # Kontainer Isi (Bisa di-scroll jika layar kecil, tapi default menampung semua)
+        html += '<div class="history-table" style="max-height: 450px; overflow-y: auto; padding-right: 5px;">'
+        
+        # Loop semua tahun (2011 - 2025)
+        for yr in sorted(df['tahun'].unique(), reverse=True): # Diurutkan dari tahun terbaru (opsional, bisa hapus reverse=True jika ingin dari 2011)
+            df_yr = df[df['tahun'] == yr]
+            # Baris Tahun dengan efek highlight saat di-hover
+            html += '<div style="display: flex; align-items: center; border-bottom: 1px solid #f8fafc; padding: 12px 0; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor=\'#f1f5f9\'" onmouseout="this.style.backgroundColor=\'transparent\'">'
+            html += f'<div style="width: 70px; font-weight: 800; color: #64748b; font-size: 0.95rem;">{int(yr)}</div>'
+            
+            # Looping Progress bar setiap pilar/sub-pilar
+            for label, col in komponen.items():
+                val = df_yr[col].values[0] if not df_yr.empty else 0
+                pct = min((val / max_val_bar) * 100, 100)
+                html += f'''
+                <div style="flex: 1; padding: 0 15px;">
+                    <div style="font-size: 0.9rem; color: #0f172a; font-weight: 700; margin-bottom: 5px;">{val:.2f}</div>
+                    <div style="width: 100%; background: #e2e8f0; height: 7px; border-radius: 4px;">
+                        <div style="width: {pct}%; background: linear-gradient(90deg, #0ea5e9, #2563eb); height: 100%; border-radius: 4px;"></div>
+                    </div>
+                </div>
+                '''
+            html += '</div>'
+        
+        html += '</div></div>'
+        return html
 
 
     # ==========================================
@@ -508,7 +503,6 @@ with tab_analisis:
         with col_f2:
             pilihan_ind = st.selectbox("🎯 Pilih Indikator:", list(hierarki_indikator.keys()), key="ind_prov")
 
-        # Logika Filter Data Provinsi
         if pilihan_prov == "Nasional (Rata-rata)":
             df_prov_chart = df_provinsi.groupby('tahun').mean(numeric_only=True).reset_index()
         else:
@@ -519,44 +513,20 @@ with tab_analisis:
             komponen = hierarki_indikator[pilihan_ind]["komponen"]
             
             st.markdown('<div class="chart-card">', unsafe_allow_html=True)
-            
-            # --- BAGIAN ATAS: GRAFIK AREA ---
+            # 1. Grafik Area Line
             st.plotly_chart(buat_grafik_area(df_prov_chart, kolom_target, pilihan_ind), use_container_width=True)
-            st.markdown('<hr style="border-top: 1px dashed #cbd5e1; margin: 30px 0;">', unsafe_allow_html=True)
-            
-            # --- BAGIAN BAWAH: DEKOMPOSISI (PROGRESS BAR) ---
-            tahun_terakhir = int(df_prov_chart['tahun'].max())
-            df_terakhir = df_prov_chart[df_prov_chart['tahun'] == tahun_terakhir]
-            
-            # Layout 2 Kolom (Kiri: Info Tahun, Kanan: Progress Bar Komponen)
-            col_thn, col_prog = st.columns([1, 2.5])
-            with col_thn:
-                st.markdown(f"""
-                <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; text-align: center; height: 100%; display: flex; flex-direction: column; justify-content: center;">
-                    <div style="color: #64748b; font-size: 1rem; font-weight: 600; margin-bottom: 5px;">Tahun Analisis</div>
-                    <div style="color: #0b5394; font-size: 3rem; font-weight: 800; line-height: 1;">{tahun_terakhir}</div>
-                    <div style="color: #475569; font-size: 0.9rem; margin-top: 10px;">Komposisi Penyusun:<br><b>{pilihan_ind}</b></div>
-                </div>
-                """, unsafe_allow_html=True)
-            
-            with col_prog:
-                # Mencari nilai maksimum dinamis agar progress bar proporsional (Default min 10)
-                max_val_data = df_terakhir[list(komponen.values())].max(axis=1).values[0] if not df_terakhir.empty else 10
-                max_val_bar = max(10, max_val_data * 1.2) # Beri buffer 20%
-                
-                for label_komp, col_komp in komponen.items():
-                    nilai_komp = df_terakhir[col_komp].values[0] if not df_terakhir.empty else 0
-                    render_progress_bar(label_komp, nilai_komp, max_val_bar)
-            
+            # 2. Tabel Grid Historis (Tahun 2011 - 2025)
+            st.markdown(buat_tabel_historis(df_prov_chart, komponen), unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
             
-            # --- FITUR DOWNLOAD PROVINSI ---
-            csv_prov = df_prov_chart.to_csv(index=False).encode('utf-8')
+            # --- FITUR DOWNLOAD FULL DATA PROVINSI (Mengabaikan Filter) ---
+            csv_prov_all = df_provinsi.to_csv(index=False).encode('utf-8')
             st.download_button(
-                label=f"📥 Unduh Data {pilihan_prov} (CSV)",
-                data=csv_prov,
-                file_name=f"Data_IPEI_{pilihan_prov.replace(' ', '_')}.csv",
+                label="📥 Unduh Seluruh Data Provinsi (CSV)",
+                data=csv_prov_all,
+                file_name="Data_IPEI_Seluruh_Provinsi.csv",
                 mime='text/csv',
+                use_container_width=True
             )
         else:
             st.warning("Data tidak tersedia untuk wilayah ini.")
@@ -566,7 +536,6 @@ with tab_analisis:
     # SUB-TAB 2: KABUPATEN/KOTA
     # ==========================================
     with subtab_kab:
-        # Mapping Kode Provinsi ke Nama Provinsi untuk kebutuhan filter
         map_provinsi = dict(zip(df_provinsi['kodedaerah'].str[:2] + '00', df_provinsi['namadaerah']))
         df_kabkota['nama_provinsi'] = df_kabkota['kodedaerah'].str[:2] + '00'
         df_kabkota['nama_provinsi'] = df_kabkota['nama_provinsi'].map(map_provinsi)
@@ -576,7 +545,6 @@ with tab_analisis:
             list_filter_prov = sorted(df_kabkota['nama_provinsi'].dropna().unique().tolist())
             filter_prov = st.selectbox("📍 Filter Provinsi:", list_filter_prov, key="filt_prov_kab")
         with col_k2:
-            # Filter dropdown Kab/Kota berdasarkan provinsi yang dipilih
             df_kab_filtered = df_kabkota[df_kabkota['nama_provinsi'] == filter_prov]
             list_kab = sorted(df_kab_filtered['namadaerah'].dropna().unique().tolist())
             pilihan_kab = st.selectbox("🏙️ Pilih Kabupaten/Kota:", list_kab, key="pil_kab")
@@ -590,42 +558,20 @@ with tab_analisis:
             komponen_kab = hierarki_indikator[pilihan_ind_kab]["komponen"]
             
             st.markdown('<div class="chart-card">', unsafe_allow_html=True)
-            
-            # --- BAGIAN ATAS: GRAFIK AREA ---
+            # 1. Grafik Area Line
             st.plotly_chart(buat_grafik_area(df_kab_chart, kolom_target_kab, pilihan_ind_kab), use_container_width=True)
-            st.markdown('<hr style="border-top: 1px dashed #cbd5e1; margin: 30px 0;">', unsafe_allow_html=True)
-            
-            # --- BAGIAN BAWAH: DEKOMPOSISI (PROGRESS BAR) ---
-            thn_akhir_kab = int(df_kab_chart['tahun'].max())
-            df_akhir_kab = df_kab_chart[df_kab_chart['tahun'] == thn_akhir_kab]
-            
-            col_thn_k, col_prog_k = st.columns([1, 2.5])
-            with col_thn_k:
-                st.markdown(f"""
-                <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; text-align: center; height: 100%; display: flex; flex-direction: column; justify-content: center;">
-                    <div style="color: #64748b; font-size: 1rem; font-weight: 600; margin-bottom: 5px;">Tahun Analisis</div>
-                    <div style="color: #0b5394; font-size: 3rem; font-weight: 800; line-height: 1;">{thn_akhir_kab}</div>
-                    <div style="color: #475569; font-size: 0.9rem; margin-top: 10px;">Komposisi Penyusun:<br><b>{pilihan_ind_kab}</b></div>
-                </div>
-                """, unsafe_allow_html=True)
-            
-            with col_prog_k:
-                max_val_data_k = df_akhir_kab[list(komponen_kab.values())].max(axis=1).values[0] if not df_akhir_kab.empty else 10
-                max_val_bar_k = max(10, max_val_data_k * 1.2)
-                
-                for label_komp, col_komp in komponen_kab.items():
-                    nilai_komp = df_akhir_kab[col_komp].values[0] if not df_akhir_kab.empty else 0
-                    render_progress_bar(label_komp, nilai_komp, max_val_bar_k)
-            
+            # 2. Tabel Grid Historis (Tahun 2011 - 2025)
+            st.markdown(buat_tabel_historis(df_kab_chart, komponen_kab), unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
             
-            # --- FITUR DOWNLOAD KABUPATEN/KOTA ---
-            csv_kab = df_kab_chart.to_csv(index=False).encode('utf-8')
+            # --- FITUR DOWNLOAD FULL DATA KABUPATEN (Mengabaikan Filter) ---
+            csv_kab_all = df_kabkota.to_csv(index=False).encode('utf-8')
             st.download_button(
-                label=f"📥 Unduh Data {pilihan_kab} (CSV)",
-                data=csv_kab,
-                file_name=f"Data_IPEI_{pilihan_kab.replace(' ', '_')}.csv",
+                label="📥 Unduh Seluruh Data Kabupaten/Kota (CSV)",
+                data=csv_kab_all,
+                file_name="Data_IPEI_Seluruh_Kabupaten.csv",
                 mime='text/csv',
+                use_container_width=True
             )
         else:
             st.warning("Data tidak tersedia untuk wilayah ini.")
