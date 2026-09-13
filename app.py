@@ -145,131 +145,635 @@ tab_beranda, tab_tentang, tab_peta, tab_analisis, tab_metadata = st.tabs([
 # ISI TAB: BERANDA
 # =========================================================
 with tab_beranda:
-    col_teks, col_gambar = st.columns([1.2, 1], gap="large")
-    
-    with col_teks:
-        st.markdown("<br>", unsafe_allow_html=True) 
-        st.markdown("""
-        <div style="background-color: #f0f7ff; color: #0b5394; padding: 6px 18px; border-radius: 20px; font-size: 0.9rem; font-weight: 700; display: inline-block; margin-bottom: 15px; border: 1px solid #dbeaf7;">
-            Tim Data & Analisis Makro
-        </div>
-        <h1 style="color: #083c6b; font-size: 3.2rem; font-weight: 800; line-height: 1.2; margin-bottom: 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-            Indeks Pembangunan Ekonomi Inklusif <span style="color: #2196f3;">(IPEI)</span>
-        </h1>
-        <p style="color: #4a5568; font-size: 1.15rem; line-height: 1.7; margin-bottom: 30px;">
-            Tingkatkan evaluasi pembangunan makroekonomi daerah dengan analitik spasial yang komprehensif. Jaga fokus analisis strategis sekaligus wujudkan ekosistem pertumbuhan yang inklusif dan berwawasan lingkungan.
-        </p>
-        """, unsafe_allow_html=True)
-        
-        btn1, btn2 = st.columns([1, 1])
-        
-        with btn1:
-            if st.button("🗺️ Eksplorasi Peta", type="primary", use_container_width=True):
-                js = """
-                <script>
-                var tabs = window.parent.document.querySelectorAll('button[data-baseweb="tab"]');
-                for (var i=0; i<tabs.length; i++) {
-                    if (tabs[i].innerText.includes('Peta IPEI')) {
-                        tabs[i].click();
-                        break;
-                    }
-                }
-                </script>
-                """
-                st.components.v1.html(js, height=0)
-                
-        with btn2:
-            if st.button("📄 Lihat Metadata", use_container_width=True):
-                js = """
-                <script>
-                var tabs = window.parent.document.querySelectorAll('button[data-baseweb="tab"]');
-                for (var i=0; i<tabs.length; i++) {
-                    if (tabs[i].innerText.includes('Metadata')) {
-                        tabs[i].click();
-                        break;
-                    }
-                }
-                </script>
-                """
-                st.components.v1.html(js, height=0)
-    
-    with col_gambar:
-        st.image("https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=800&auto=format&fit=crop", use_container_width=True)
-
-
-# =========================================================
-# ISI TAB: TENTANG IPEI
-# =========================================================
-with tab_tentang:
-    st.title("Tentang Indeks Pembangunan Ekonomi Inklusif")
+    # -----------------------------------------------------
+    # CSS KHUSUS HERO BERANDA
+    # -----------------------------------------------------
     st.markdown("""
     <style>
-    .hero-banner-info {
-        background: linear-gradient(135deg, #0b5394 0%, #3d85c6 100%);
-        padding: 40px;
-        border-radius: 15px;
-        color: white;
+
+    /* =====================================================
+       HERO BERANDA IPEI
+       ===================================================== */
+
+    .st-key-hero_ipei {
+        position: relative;
+        overflow: hidden;
+
+        background:
+            radial-gradient(
+                circle at 82% 22%,
+                rgba(255,255,255,0.95) 0%,
+                rgba(255,255,255,0.30) 20%,
+                rgba(255,255,255,0) 42%
+            ),
+            linear-gradient(
+                180deg,
+                #ffffff 0%,
+                #f2f9ff 18%,
+                #d9edfc 42%,
+                #acd8f5 70%,
+                #74b6e6 100%
+            );
+
+        border-radius: 28px;
+        padding: 58px 58px 52px 58px;
+        margin-top: 18px;
         margin-bottom: 30px;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+
+        min-height: 570px;
+
+        box-shadow:
+            0 18px 45px rgba(11, 83, 148, 0.15);
+
+        border: 1px solid rgba(11, 83, 148, 0.08);
     }
-    .hero-title-info {
-        font-size: 2.2em;
-        font-weight: 700;
-        margin-bottom: 15px;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+
+    /* Dekorasi background */
+    .st-key-hero_ipei::before {
+        content: "";
+        position: absolute;
+
+        width: 500px;
+        height: 500px;
+
+        right: -170px;
+        top: -200px;
+
+        border-radius: 50%;
+
+        background:
+            radial-gradient(
+                circle,
+                rgba(255,255,255,0.40),
+                rgba(255,255,255,0)
+            );
+
+        pointer-events: none;
     }
-    .hero-text-info {
-        font-size: 1.15em;
-        line-height: 1.6;
-        margin-bottom: 0;
-        opacity: 0.95;
+
+
+    /* -----------------------------------------------------
+       JUDUL HERO
+       ----------------------------------------------------- */
+
+    .ipei-hero-title {
+
+        color: #123b5d;
+
+        font-family:
+            'Segoe UI',
+            Arial,
+            sans-serif;
+
+        font-size: clamp(3rem, 4.2vw, 5rem);
+
+        line-height: 1.04;
+
+        letter-spacing: -2px;
+
+        font-weight: 750;
+
+        margin-top: 18px;
+        margin-bottom: 28px;
+
+        max-width: 760px;
     }
+
+
+    .ipei-highlight {
+
+        color: #0b5394;
+
+        font-weight: 800;
+    }
+
+
+    /* -----------------------------------------------------
+       DESKRIPSI
+       ----------------------------------------------------- */
+
+    .ipei-hero-description {
+
+        color: #40566a;
+
+        font-size: 1.20rem;
+
+        line-height: 1.72;
+
+        max-width: 700px;
+
+        margin-bottom: 24px;
+
+        font-family:
+            'Segoe UI',
+            Arial,
+            sans-serif;
+    }
+
+
+    /* -----------------------------------------------------
+       BUTTON PETA
+       ----------------------------------------------------- */
+
+    .st-key-hero_btn_peta button {
+
+        background: #0b5394 !important;
+
+        color: #ffffff !important;
+
+        border: 1px solid #0b5394 !important;
+
+        border-radius: 999px !important;
+
+        min-height: 54px;
+
+        font-size: 1.03rem !important;
+
+        font-weight: 700 !important;
+
+        padding-left: 22px !important;
+        padding-right: 22px !important;
+
+        box-shadow:
+            0 7px 18px rgba(11,83,148,0.22);
+
+        transition:
+            transform .20s ease,
+            box-shadow .20s ease,
+            background .20s ease;
+    }
+
+
+    .st-key-hero_btn_peta button:hover {
+
+        background: #083c6b !important;
+
+        border-color: #083c6b !important;
+
+        transform: translateY(-2px);
+
+        box-shadow:
+            0 10px 24px rgba(11,83,148,0.28);
+    }
+
+
+    /* -----------------------------------------------------
+       BUTTON METADATA
+       ----------------------------------------------------- */
+
+    .st-key-hero_btn_metadata button {
+
+        background: rgba(255,255,255,0.48) !important;
+
+        color: #163e61 !important;
+
+        border: 1px solid rgba(11,83,148,0.14) !important;
+
+        border-radius: 999px !important;
+
+        min-height: 54px;
+
+        font-size: 1.03rem !important;
+
+        font-weight: 700 !important;
+
+        padding-left: 22px !important;
+        padding-right: 22px !important;
+
+        backdrop-filter: blur(8px);
+
+        transition:
+            transform .20s ease,
+            background .20s ease;
+    }
+
+
+    .st-key-hero_btn_metadata button:hover {
+
+        background: rgba(255,255,255,0.75) !important;
+
+        transform: translateY(-2px);
+
+        color: #0b5394 !important;
+    }
+
+
+    /* -----------------------------------------------------
+       GAMBAR HERO
+       ----------------------------------------------------- */
+
+    .st-key-hero_ipei [data-testid="stImage"] img {
+
+        border-radius: 0 !important;
+
+        box-shadow: none !important;
+
+        object-fit: contain;
+
+        max-height: 470px;
+    }
+
+
+    /* -----------------------------------------------------
+       FALLBACK ILLUSTRATION
+       ----------------------------------------------------- */
+
+    .inclusive-illustration {
+
+        width: 100%;
+
+        display: flex;
+
+        justify-content: center;
+
+        align-items: center;
+
+        min-height: 430px;
+    }
+
+
+    /* -----------------------------------------------------
+       RESPONSIVE
+       ----------------------------------------------------- */
+
+    @media (max-width: 900px) {
+
+        .st-key-hero_ipei {
+
+            padding:
+                36px 28px 32px 28px;
+
+            border-radius: 22px;
+
+            min-height: auto;
+        }
+
+
+        .ipei-hero-title {
+
+            font-size: 3rem;
+
+            letter-spacing: -1px;
+        }
+
+
+        .ipei-hero-description {
+
+            font-size: 1.05rem;
+        }
+
+    }
+
     </style>
     """, unsafe_allow_html=True)
 
-    st.markdown("""
-    <div class="hero-banner-info">
-        <div class="hero-title-info">Indeks Pembangunan Ekonomi Inklusif (IPEI)</div>
-        <div class="hero-text-info">
-            Indeks Pembangunan Ekonomi Inklusif (IPEI) merupakan alat ukur komprehensif untuk memantau tingkat inklusivitas pembangunan ekonomi suatu wilayah. Indeks ini dirancang untuk memastikan bahwa pertumbuhan ekonomi berjalan selaras dengan pemerataan pendapatan, pengurangan kemiskinan, serta perluasan akses dan kesempatan bagi seluruh lapisan masyarakat.
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
 
-    st.markdown("### Komponen Pembentuk IPEI")
-    st.markdown("Struktur penilaian IPEI didasarkan pada **3 (tiga) pilar utama** dan **8 (delapan) sub-pilar** penggerak, yaitu:")
-    st.write("") 
+    # -----------------------------------------------------
+    # HERO CONTAINER
+    # -----------------------------------------------------
 
-    col1, col2, col3 = st.columns(3)
+    with st.container(key="hero_ipei"):
 
-    with col1:
-        st.markdown("""
-        <div style="background-color: #ffffff; border-radius: 12px; padding: 25px 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); border: 1px solid #f0f2f6; height: 100%;">
-            <div style="color: #0b5394; font-size: 1.25em; font-weight: 700; margin-bottom: 20px; border-bottom: 2px solid #f0f2f6; padding-bottom: 12px; line-height: 1.4;">Pilar 1:<br>Pertumbuhan & Perkembangan Ekonomi</div>
-            <div style="display: flex; align-items: center; margin-bottom: 12px; font-size: 1.05em; color: #444444; font-weight: 500;"><span style="margin-right: 12px; font-size: 1.3em; background-color: #f0f8ff; padding: 5px; border-radius: 8px;">📊</span> Sub-Pilar 1.1: Pertumbuhan Ekonomi</div>
-            <div style="display: flex; align-items: center; margin-bottom: 12px; font-size: 1.05em; color: #444444; font-weight: 500;"><span style="margin-right: 12px; font-size: 1.3em; background-color: #f0f8ff; padding: 5px; border-radius: 8px;">💼</span> Sub-Pilar 1.2: Kesempatan Kerja</div>
-            <div style="display: flex; align-items: center; margin-bottom: 12px; font-size: 1.05em; color: #444444; font-weight: 500;"><span style="margin-right: 12px; font-size: 1.3em; background-color: #f0f8ff; padding: 5px; border-radius: 8px;">🏗️</span> Sub-Pilar 1.3: Infrastruktur</div>
-        </div>
-        """, unsafe_allow_html=True)
+        col_teks, col_gambar = st.columns(
+            [1.18, 0.82],
+            gap="large"
+        )
 
-    with col2:
-        st.markdown("""
-        <div style="background-color: #ffffff; border-radius: 12px; padding: 25px 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); border: 1px solid #f0f2f6; height: 100%;">
-            <div style="color: #0b5394; font-size: 1.25em; font-weight: 700; margin-bottom: 20px; border-bottom: 2px solid #f0f2f6; padding-bottom: 12px; line-height: 1.4;">Pilar 2:<br>Pemerataan Pendapatan & Pengurangan Kemiskinan</div>
-            <div style="display: flex; align-items: center; margin-bottom: 12px; font-size: 1.05em; color: #444444; font-weight: 500;"><span style="margin-right: 12px; font-size: 1.3em; background-color: #f0f8ff; padding: 5px; border-radius: 8px;">📉</span> Sub-Pilar 2.1: Ketimpangan</div>
-            <div style="display: flex; align-items: center; margin-bottom: 12px; font-size: 1.05em; color: #444444; font-weight: 500;"><span style="margin-right: 12px; font-size: 1.3em; background-color: #f0f8ff; padding: 5px; border-radius: 8px;">🛡️</span> Sub-Pilar 2.2: Kemiskinan</div>
-        </div>
-        """, unsafe_allow_html=True)
 
-    with col3:
-        st.markdown("""
-        <div style="background-color: #ffffff; border-radius: 12px; padding: 25px 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); border: 1px solid #f0f2f6; height: 100%;">
-            <div style="color: #0b5394; font-size: 1.25em; font-weight: 700; margin-bottom: 20px; border-bottom: 2px solid #f0f2f6; padding-bottom: 12px; line-height: 1.4;">Pilar 3:<br>Perluasan Akses & Kesempatan</div>
-            <div style="display: flex; align-items: center; margin-bottom: 12px; font-size: 1.05em; color: #444444; font-weight: 500;"><span style="margin-right: 12px; font-size: 1.3em; background-color: #f0f8ff; padding: 5px; border-radius: 8px;">🎓</span> Sub-Pilar 3.1: Kapabilitas Manusia</div>
-            <div style="display: flex; align-items: center; margin-bottom: 12px; font-size: 1.05em; color: #444444; font-weight: 500;"><span style="margin-right: 12px; font-size: 1.3em; background-color: #f0f8ff; padding: 5px; border-radius: 8px;">🏥</span> Sub-Pilar 3.2: Infrastruktur Dasar</div>
-            <div style="display: flex; align-items: center; margin-bottom: 12px; font-size: 1.05em; color: #444444; font-weight: 500;"><span style="margin-right: 12px; font-size: 1.3em; background-color: #f0f8ff; padding: 5px; border-radius: 8px;">💳</span> Sub-Pilar 3.3: Keuangan Inklusif</div>
-        </div>
-        """, unsafe_allow_html=True)
+        # =================================================
+        # BAGIAN KIRI
+        # =================================================
+
+        with col_teks:
+
+            st.markdown("""
+            <div style="height:15px;"></div>
+
+            <div class="ipei-hero-title">
+
+                Indeks Pembangunan<br>
+                Ekonomi Inklusif
+
+                <span class="ipei-highlight">
+                    (IPEI)
+                </span>
+
+            </div>
+
+
+            <div class="ipei-hero-description">
+
+                Tingkatkan evaluasi pembangunan makroekonomi daerah
+                dengan analitik spasial yang komprehensif.
+
+                Jaga fokus analisis strategis sekaligus wujudkan
+                ekosistem pertumbuhan yang inklusif dan
+                berwawasan lingkungan.
+
+            </div>
+
+            """, unsafe_allow_html=True)
+
+
+            # ---------------------------------------------
+            # BUTTON
+            # ---------------------------------------------
+
+            btn_peta, btn_metadata = st.columns(
+                [1.05, 0.95],
+                gap="small"
+            )
+
+
+            with btn_peta:
+
+                st.button(
+                    "🗺️  Eksplorasi Peta",
+                    type="primary",
+                    use_container_width=True,
+                    key="hero_btn_peta",
+                    on_click=pindah_tab,
+                    args=("Peta IPEI",)
+                )
+
+
+            with btn_metadata:
+
+                st.button(
+                    "📄  Metadata",
+                    use_container_width=True,
+                    key="hero_btn_metadata",
+                    on_click=pindah_tab,
+                    args=("Metadata",)
+                )
+
+
+        # =================================================
+        # BAGIAN KANAN — ILUSTRASI
+        # =================================================
+
+        with col_gambar:
+
+            # -------------------------------------------------
+            # Jika Anda memiliki gambar sendiri:
+            #
+            # Simpan file sebagai:
+            #
+            # assets/hero_ipei.png
+            #
+            # Lalu ganti blok SVG di bawah menjadi:
+            #
+            # st.image(
+            #     "assets/hero_ipei.png",
+            #     use_container_width=True
+            # )
+            # -------------------------------------------------
+
+
+            # Ilustrasi sementara:
+            # pertumbuhan ekonomi + masyarakat + inklusivitas
+
+            st.markdown("""
+            <div class="inclusive-illustration">
+
+            <svg
+                width="100%"
+                viewBox="0 0 600 500"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+            >
+
+            <!-- BACKGROUND GLOW -->
+
+            <circle
+                cx="320"
+                cy="240"
+                r="205"
+                fill="white"
+                fill-opacity="0.25"
+            />
+
+
+            <circle
+                cx="320"
+                cy="240"
+                r="165"
+                fill="white"
+                fill-opacity="0.20"
+            />
+
+
+            <!-- PLATFORM -->
+
+            <ellipse
+                cx="315"
+                cy="405"
+                rx="225"
+                ry="45"
+                fill="#0B5394"
+                fill-opacity="0.12"
+            />
+
+
+            <!-- BAR CHART -->
+
+            <rect
+                x="205"
+                y="275"
+                width="62"
+                height="120"
+                rx="14"
+                fill="#66B7E8"
+            />
+
+            <rect
+                x="285"
+                y="220"
+                width="62"
+                height="175"
+                rx="14"
+                fill="#2986CC"
+            />
+
+            <rect
+                x="365"
+                y="150"
+                width="62"
+                height="245"
+                rx="14"
+                fill="#0B5394"
+            />
+
+
+            <!-- TREND LINE -->
+
+            <path
+                d="
+                M175 300
+                C240 285,
+                 275 230,
+                 315 235
+                C360 240,
+                 390 165,
+                 455 130
+                "
+                stroke="#083C6B"
+                stroke-width="12"
+                stroke-linecap="round"
+                fill="none"
+            />
+
+
+            <!-- ARROW -->
+
+            <path
+                d="M430 119 L463 126 L448 158"
+                stroke="#083C6B"
+                stroke-width="12"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            />
+
+
+            <!-- PERSON LEFT -->
+
+            <circle
+                cx="135"
+                cy="220"
+                r="28"
+                fill="#F6C66C"
+            />
+
+            <rect
+                x="104"
+                y="252"
+                width="62"
+                height="86"
+                rx="28"
+                fill="#FFFFFF"
+            />
+
+            <path
+                d="M112 275 L75 322"
+                stroke="#FFFFFF"
+                stroke-width="20"
+                stroke-linecap="round"
+            />
+
+            <path
+                d="M159 275 L190 320"
+                stroke="#FFFFFF"
+                stroke-width="20"
+                stroke-linecap="round"
+            />
+
+
+            <!-- PERSON RIGHT -->
+
+            <circle
+                cx="490"
+                cy="260"
+                r="28"
+                fill="#E5A35A"
+            />
+
+            <rect
+                x="459"
+                y="292"
+                width="62"
+                height="86"
+                rx="28"
+                fill="#DDF2FF"
+            />
+
+            <path
+                d="M465 310 L430 345"
+                stroke="#DDF2FF"
+                stroke-width="20"
+                stroke-linecap="round"
+            />
+
+            <path
+                d="M515 310 L548 344"
+                stroke="#DDF2FF"
+                stroke-width="20"
+                stroke-linecap="round"
+            />
+
+
+            <!-- PERSON TOP -->
+
+            <circle
+                cx="290"
+                cy="86"
+                r="27"
+                fill="#F2BB67"
+            />
+
+            <rect
+                x="260"
+                y="116"
+                width="60"
+                height="72"
+                rx="28"
+                fill="#FFFFFF"
+                fill-opacity="0.94"
+            />
+
+
+            <!-- CONNECTION NODES -->
+
+            <circle
+                cx="135"
+                cy="220"
+                r="46"
+                stroke="#FFFFFF"
+                stroke-opacity="0.50"
+                stroke-width="3"
+            />
+
+            <circle
+                cx="490"
+                cy="260"
+                r="46"
+                stroke="#FFFFFF"
+                stroke-opacity="0.50"
+                stroke-width="3"
+            />
+
+            <circle
+                cx="290"
+                cy="86"
+                r="45"
+                stroke="#FFFFFF"
+                stroke-opacity="0.50"
+                stroke-width="3"
+            />
+
+
+            <!-- CONNECTION LINES -->
+
+            <path
+                d="M170 200 L260 115"
+                stroke="#FFFFFF"
+                stroke-opacity="0.50"
+                stroke-width="3"
+                stroke-dasharray="8 8"
+            />
+
+            <path
+                d="M320 105 L460 230"
+                stroke="#FFFFFF"
+                stroke-opacity="0.50"
+                stroke-width="3"
+                stroke-dasharray="8 8"
+            />
+
+            </svg>
+
+            </div>
+            """, unsafe_allow_html=True)
 
 
 # =========================================================
