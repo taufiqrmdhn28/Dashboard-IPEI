@@ -14,17 +14,16 @@ st.set_page_config(
 )
 
 # -----------------------------------------------------------------------------
-# 2. FUNGSI PEMUATAN DATA (CACHING) DENGAN PEMBERSIH ERROR
+# 2. FUNGSI PEMUATAN DATA (CACHING) DENGAN PEMBERSIH JSON KETAT
 # -----------------------------------------------------------------------------
 @st.cache_data
 def load_data():
     # Load data Excel
     df = pd.read_excel("Data_Dummy_IPEI.xlsx")
     
-    # 1. Pastikan kodedaerah bersih (tanpa spasi dan tanpa .0 di belakangnya)
+    # Bersihkan kodedaerah dari spasi atau format desimal (.0)
     df['kodedaerah'] = df['kodedaerah'].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
     
-    # Pastikan kolom-kolom indikator terbaca sebagai angka (bukan teks) agar peta bisa merender warna
     kolom_indikator = ['ipei', 'pilar1', 'pilar2', 'pilar3', 'sp11', 'sp12', 'sp13', 'sp21', 'sp22', 'sp31', 'sp32', 'sp33']
     for col in kolom_indikator:
         if col in df.columns:
@@ -34,16 +33,21 @@ def load_data():
     with open("38_Provinsi_Indonesia_Kabupaten_Adjusted.json", "r", encoding="utf-8") as f:
         geojson = json.load(f)
         
-    # 2. Sisir file JSON untuk mencegah AttributeError jika ada area yang properties-nya Null
+    # INJEKSI ID: Buat daftar baru yang HANYA berisi wilayah valid
+    features_valid = []
     for feature in geojson.get('features', []):
-        # Jika properties kosong/null, paksa menjadi dictionary kosong
-        if 'properties' not in feature or feature['properties'] is None:
-            feature['properties'] = {}
+        # Pastikan wilayah tersebut punya koordinat (geometry) dan informasi (properties)
+        if feature.get('geometry') is not None and feature.get('properties') is not None:
+            kode = str(feature['properties'].get('kodedaerah_kabkota', '')).replace('.0', '').strip()
             
-        # Ambil nilai kodedaerah, jika tidak ada, beri nama "UNKNOWN"
-        val = feature['properties'].get('kodedaerah_kabkota', 'UNKNOWN')
-        # Ubah jadi teks dan bersihkan
-        feature['properties']['kodedaerah_kabkota'] = str(val).replace('.0', '').strip()
+            # Jika kodenya valid (bukan kosong/None)
+            if kode and kode.lower() != 'none':
+                # Tempelkan kode langsung sebagai ID utama di root feature
+                feature['id'] = kode
+                features_valid.append(feature)
+    
+    # Timpa daftar wilayah yang lama dengan daftar yang sudah bersih
+    geojson['features'] = features_valid
             
     return df, geojson
 
@@ -100,7 +104,7 @@ if menu == "🏠 Halaman Utama (Peta IPEI)":
             df_filtered,
             geojson=geojson,
             locations='kodedaerah',           
-            featureidkey='properties.kodedaerah_kabkota',   
+            # Parameter featureidkey DIHAPUS karena kita menggunakan ID standar
             color=selected_kolom,             
             color_continuous_scale="RdYlGn",  
             mapbox_style="carto-positron",
