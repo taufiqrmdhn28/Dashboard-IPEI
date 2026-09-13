@@ -4,6 +4,7 @@ import plotly.express as px
 import json
 import geopandas as gpd
 import math
+import textwrap
 
 # -----------------------------------------------------------------------------
 # 1. KONFIGURASI HALAMAN
@@ -145,188 +146,133 @@ tab_beranda, tab_tentang, tab_peta, tab_analisis, tab_metadata = st.tabs([
 # ISI TAB: BERANDA
 # =========================================================
 with tab_beranda:
-    # -----------------------------------------------------
-    # CSS KHUSUS HERO BERANDA
-    # -----------------------------------------------------
+
+    # =====================================================
+    # CSS HERO BERANDA
+    # =====================================================
     st.markdown("""
     <style>
 
-    /* =====================================================
-       HERO BERANDA IPEI
-       ===================================================== */
-
+    /* HERO UTAMA */
     .st-key-hero_ipei {
         position: relative;
         overflow: hidden;
 
         background:
             radial-gradient(
-                circle at 82% 22%,
+                circle at 83% 18%,
                 rgba(255,255,255,0.95) 0%,
-                rgba(255,255,255,0.30) 20%,
+                rgba(255,255,255,0.55) 17%,
                 rgba(255,255,255,0) 42%
             ),
             linear-gradient(
                 180deg,
-                #ffffff 0%,
-                #f2f9ff 18%,
-                #d9edfc 42%,
-                #acd8f5 70%,
-                #74b6e6 100%
+                #fafdff 0%,
+                #eaf6ff 22%,
+                #cce8fa 48%,
+                #9dceef 72%,
+                #6eb2e1 100%
             );
 
         border-radius: 28px;
-        padding: 58px 58px 52px 58px;
-        margin-top: 18px;
+        padding: 50px 55px;
+        margin-top: 25px;
         margin-bottom: 30px;
 
-        min-height: 570px;
+        min-height: 520px;
+
+        border: 1px solid rgba(11, 83, 148, 0.12);
 
         box-shadow:
-            0 18px 45px rgba(11, 83, 148, 0.15);
-
-        border: 1px solid rgba(11, 83, 148, 0.08);
+            0px 18px 45px rgba(11, 83, 148, 0.15);
     }
 
 
-    /* Dekorasi background */
-    .st-key-hero_ipei::before {
-        content: "";
-        position: absolute;
-
-        width: 500px;
-        height: 500px;
-
-        right: -170px;
-        top: -200px;
-
-        border-radius: 50%;
-
-        background:
-            radial-gradient(
-                circle,
-                rgba(255,255,255,0.40),
-                rgba(255,255,255,0)
-            );
-
-        pointer-events: none;
-    }
-
-
-    /* -----------------------------------------------------
-       JUDUL HERO
-       ----------------------------------------------------- */
-
+    /* JUDUL */
     .ipei-hero-title {
-
-        color: #123b5d;
+        color: #143b5c;
 
         font-family:
-            'Segoe UI',
+            "Segoe UI",
             Arial,
             sans-serif;
 
-        font-size: clamp(3rem, 4.2vw, 5rem);
-
-        line-height: 1.04;
-
-        letter-spacing: -2px;
+        font-size: clamp(3rem, 4vw, 4.7rem);
 
         font-weight: 750;
 
-        margin-top: 18px;
-        margin-bottom: 28px;
+        line-height: 1.06;
 
-        max-width: 760px;
+        letter-spacing: -2px;
+
+        margin-top: 30px;
+        margin-bottom: 25px;
     }
 
 
     .ipei-highlight {
-
         color: #0b5394;
-
         font-weight: 800;
     }
 
 
-    /* -----------------------------------------------------
-       DESKRIPSI
-       ----------------------------------------------------- */
-
-    .ipei-hero-description {
-
-        color: #40566a;
-
-        font-size: 1.20rem;
-
-        line-height: 1.72;
-
-        max-width: 700px;
-
-        margin-bottom: 24px;
+    /* DESKRIPSI */
+    .ipei-description {
+        color: #42596d;
 
         font-family:
-            'Segoe UI',
+            "Segoe UI",
             Arial,
             sans-serif;
+
+        font-size: 1.15rem;
+
+        line-height: 1.7;
+
+        max-width: 690px;
+
+        margin-bottom: 30px;
     }
 
 
-    /* -----------------------------------------------------
-       BUTTON PETA
-       ----------------------------------------------------- */
-
-    .st-key-hero_btn_peta button {
-
+    /* BUTTON PETA */
+    .st-key-btn_peta_ipei button {
         background: #0b5394 !important;
 
-        color: #ffffff !important;
+        color: white !important;
 
-        border: 1px solid #0b5394 !important;
+        border: none !important;
 
         border-radius: 999px !important;
 
         min-height: 54px;
 
-        font-size: 1.03rem !important;
+        font-size: 1rem !important;
 
         font-weight: 700 !important;
 
-        padding-left: 22px !important;
-        padding-right: 22px !important;
-
         box-shadow:
-            0 7px 18px rgba(11,83,148,0.22);
+            0px 8px 18px rgba(11,83,148,0.25);
 
-        transition:
-            transform .20s ease,
-            box-shadow .20s ease,
-            background .20s ease;
+        transition: all 0.2s ease;
     }
 
 
-    .st-key-hero_btn_peta button:hover {
-
+    .st-key-btn_peta_ipei button:hover {
         background: #083c6b !important;
-
-        border-color: #083c6b !important;
 
         transform: translateY(-2px);
 
         box-shadow:
-            0 10px 24px rgba(11,83,148,0.28);
+            0px 10px 25px rgba(11,83,148,0.30);
     }
 
 
-    /* -----------------------------------------------------
-       BUTTON METADATA
-       ----------------------------------------------------- */
+    /* BUTTON METADATA */
+    .st-key-btn_metadata_ipei button {
+        background: rgba(255,255,255,0.55) !important;
 
-    .st-key-hero_btn_metadata button {
-
-        background: rgba(255,255,255,0.48) !important;
-
-        color: #163e61 !important;
+        color: #173f60 !important;
 
         border: 1px solid rgba(11,83,148,0.14) !important;
 
@@ -334,109 +280,52 @@ with tab_beranda:
 
         min-height: 54px;
 
-        font-size: 1.03rem !important;
+        font-size: 1rem !important;
 
         font-weight: 700 !important;
 
-        padding-left: 22px !important;
-        padding-right: 22px !important;
-
-        backdrop-filter: blur(8px);
-
-        transition:
-            transform .20s ease,
-            background .20s ease;
+        transition: all 0.2s ease;
     }
 
 
-    .st-key-hero_btn_metadata button:hover {
-
-        background: rgba(255,255,255,0.75) !important;
-
-        transform: translateY(-2px);
+    .st-key-btn_metadata_ipei button:hover {
+        background: white !important;
 
         color: #0b5394 !important;
+
+        transform: translateY(-2px);
     }
 
 
-    /* -----------------------------------------------------
-       GAMBAR HERO
-       ----------------------------------------------------- */
-
-    .st-key-hero_ipei [data-testid="stImage"] img {
-
-        border-radius: 0 !important;
-
-        box-shadow: none !important;
-
-        object-fit: contain;
-
-        max-height: 470px;
-    }
-
-
-    /* -----------------------------------------------------
-       FALLBACK ILLUSTRATION
-       ----------------------------------------------------- */
-
-    .inclusive-illustration {
-
-        width: 100%;
-
-        display: flex;
-
-        justify-content: center;
-
-        align-items: center;
-
-        min-height: 430px;
-    }
-
-
-    /* -----------------------------------------------------
-       RESPONSIVE
-       ----------------------------------------------------- */
-
+    /* RESPONSIVE */
     @media (max-width: 900px) {
 
         .st-key-hero_ipei {
-
-            padding:
-                36px 28px 32px 28px;
-
-            border-radius: 22px;
-
+            padding: 35px 28px;
             min-height: auto;
         }
 
-
         .ipei-hero-title {
-
             font-size: 3rem;
-
             letter-spacing: -1px;
         }
 
-
-        .ipei-hero-description {
-
-            font-size: 1.05rem;
+        .ipei-description {
+            font-size: 1rem;
         }
-
     }
 
     </style>
     """, unsafe_allow_html=True)
 
 
-    # -----------------------------------------------------
+    # =====================================================
     # HERO CONTAINER
-    # -----------------------------------------------------
-
+    # =====================================================
     with st.container(key="hero_ipei"):
 
         col_teks, col_gambar = st.columns(
-            [1.18, 0.82],
+            [1.15, 0.85],
             gap="large"
         )
 
@@ -444,336 +333,395 @@ with tab_beranda:
         # =================================================
         # BAGIAN KIRI
         # =================================================
-
         with col_teks:
 
-            st.markdown("""
-            <div style="height:15px;"></div>
+            hero_text = """
+<div class="ipei-hero-title">
+    Indeks Pembangunan<br>
+    Ekonomi Inklusif
+    <span class="ipei-highlight">(IPEI)</span>
+</div>
 
-            <div class="ipei-hero-title">
+<div class="ipei-description">
+    Tingkatkan evaluasi pembangunan makroekonomi daerah
+    dengan analitik spasial yang komprehensif.
+    <br><br>
+    Jaga fokus analisis strategis sekaligus wujudkan
+    ekosistem pertumbuhan yang inklusif dan
+    berwawasan lingkungan.
+</div>
+"""
 
-                Indeks Pembangunan<br>
-                Ekonomi Inklusif
-
-                <span class="ipei-highlight">
-                    (IPEI)
-                </span>
-
-            </div>
-
-
-            <div class="ipei-hero-description">
-
-                Tingkatkan evaluasi pembangunan makroekonomi daerah
-                dengan analitik spasial yang komprehensif.
-
-                Jaga fokus analisis strategis sekaligus wujudkan
-                ekosistem pertumbuhan yang inklusif dan
-                berwawasan lingkungan.
-
-            </div>
-
-            """, unsafe_allow_html=True)
+            st.markdown(
+                textwrap.dedent(hero_text),
+                unsafe_allow_html=True
+            )
 
 
-            # ---------------------------------------------
+            # =============================================
             # BUTTON
-            # ---------------------------------------------
+            # =============================================
 
-            btn_peta, btn_metadata = st.columns(
-                [1.05, 0.95],
+            btn1, btn2 = st.columns(
+                [1, 0.9],
                 gap="small"
             )
 
 
-            with btn_peta:
+            # -------------------------
+            # EKSPLORASI PETA
+            # -------------------------
+            with btn1:
 
-                st.button(
+                if st.button(
                     "🗺️  Eksplorasi Peta",
                     type="primary",
                     use_container_width=True,
-                    key="hero_btn_peta",
-                    on_click=pindah_tab,
-                    args=("Peta IPEI",)
-                )
+                    key="btn_peta_ipei"
+                ):
+
+                    js_peta = """
+                    <script>
+
+                    var tabs =
+                    window.parent.document.querySelectorAll(
+                        'button[data-baseweb="tab"]'
+                    );
+
+                    for (var i = 0; i < tabs.length; i++) {
+
+                        if (
+                            tabs[i].innerText.includes(
+                                'Peta IPEI'
+                            )
+                        ) {
+
+                            tabs[i].click();
+                            break;
+
+                        }
+                    }
+
+                    </script>
+                    """
+
+                    st.components.v1.html(
+                        js_peta,
+                        height=0
+                    )
 
 
-            with btn_metadata:
+            # -------------------------
+            # METADATA
+            # -------------------------
+            with btn2:
 
-                st.button(
+                if st.button(
                     "📄  Metadata",
                     use_container_width=True,
-                    key="hero_btn_metadata",
-                    on_click=pindah_tab,
-                    args=("Metadata",)
-                )
+                    key="btn_metadata_ipei"
+                ):
+
+                    js_metadata = """
+                    <script>
+
+                    var tabs =
+                    window.parent.document.querySelectorAll(
+                        'button[data-baseweb="tab"]'
+                    );
+
+                    for (var i = 0; i < tabs.length; i++) {
+
+                        if (
+                            tabs[i].innerText.includes(
+                                'Metadata'
+                            )
+                        ) {
+
+                            tabs[i].click();
+                            break;
+
+                        }
+                    }
+
+                    </script>
+                    """
+
+                    st.components.v1.html(
+                        js_metadata,
+                        height=0
+                    )
 
 
         # =================================================
-        # BAGIAN KANAN — ILUSTRASI
+        # BAGIAN KANAN
+        # ILUSTRASI EKONOMI INKLUSIF
         # =================================================
-
         with col_gambar:
 
-            # -------------------------------------------------
-            # Jika Anda memiliki gambar sendiri:
-            #
-            # Simpan file sebagai:
-            #
-            # assets/hero_ipei.png
-            #
-            # Lalu ganti blok SVG di bawah menjadi:
-            #
-            # st.image(
-            #     "assets/hero_ipei.png",
-            #     use_container_width=True
-            # )
-            # -------------------------------------------------
+            ilustrasi = """
+<div style="
+    width:100%;
+    min-height:430px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+">
+
+<svg
+    width="100%"
+    height="440"
+    viewBox="0 0 600 500"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+>
+
+    <!-- GLOW BACKGROUND -->
+    <circle
+        cx="310"
+        cy="245"
+        r="210"
+        fill="white"
+        fill-opacity="0.28"
+    />
+
+    <circle
+        cx="310"
+        cy="245"
+        r="165"
+        fill="white"
+        fill-opacity="0.20"
+    />
 
 
-            # Ilustrasi sementara:
-            # pertumbuhan ekonomi + masyarakat + inklusivitas
-
-            st.markdown("""
-            <div class="inclusive-illustration">
-
-            <svg
-                width="100%"
-                viewBox="0 0 600 500"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-            >
-
-            <!-- BACKGROUND GLOW -->
-
-            <circle
-                cx="320"
-                cy="240"
-                r="205"
-                fill="white"
-                fill-opacity="0.25"
-            />
+    <!-- PLATFORM -->
+    <ellipse
+        cx="315"
+        cy="415"
+        rx="225"
+        ry="43"
+        fill="#0B5394"
+        fill-opacity="0.12"
+    />
 
 
-            <circle
-                cx="320"
-                cy="240"
-                r="165"
-                fill="white"
-                fill-opacity="0.20"
-            />
+    <!-- BAR 1 -->
+    <rect
+        x="210"
+        y="295"
+        width="62"
+        height="110"
+        rx="15"
+        fill="#64B5E5"
+    />
+
+    <!-- BAR 2 -->
+    <rect
+        x="290"
+        y="235"
+        width="62"
+        height="170"
+        rx="15"
+        fill="#2B8ACB"
+    />
+
+    <!-- BAR 3 -->
+    <rect
+        x="370"
+        y="165"
+        width="62"
+        height="240"
+        rx="15"
+        fill="#0B5394"
+    />
 
 
-            <!-- PLATFORM -->
-
-            <ellipse
-                cx="315"
-                cy="405"
-                rx="225"
-                ry="45"
-                fill="#0B5394"
-                fill-opacity="0.12"
-            />
-
-
-            <!-- BAR CHART -->
-
-            <rect
-                x="205"
-                y="275"
-                width="62"
-                height="120"
-                rx="14"
-                fill="#66B7E8"
-            />
-
-            <rect
-                x="285"
-                y="220"
-                width="62"
-                height="175"
-                rx="14"
-                fill="#2986CC"
-            />
-
-            <rect
-                x="365"
-                y="150"
-                width="62"
-                height="245"
-                rx="14"
-                fill="#0B5394"
-            />
+    <!-- GARIS PERTUMBUHAN -->
+    <path
+        d="
+        M170 320
+        C220 300,
+        250 275,
+        290 245
+        C335 210,
+        355 195,
+        405 150
+        C430 128,
+        450 115,
+        472 105
+        "
+        stroke="#083C6B"
+        stroke-width="11"
+        stroke-linecap="round"
+        fill="none"
+    />
 
 
-            <!-- TREND LINE -->
-
-            <path
-                d="
-                M175 300
-                C240 285,
-                 275 230,
-                 315 235
-                C360 240,
-                 390 165,
-                 455 130
-                "
-                stroke="#083C6B"
-                stroke-width="12"
-                stroke-linecap="round"
-                fill="none"
-            />
+    <!-- ARROW -->
+    <path
+        d="M444 99 L480 101 L470 136"
+        stroke="#083C6B"
+        stroke-width="11"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+    />
 
 
-            <!-- ARROW -->
+    <!-- ORANG KIRI -->
+    <circle
+        cx="125"
+        cy="235"
+        r="29"
+        fill="#F5C46B"
+    />
 
-            <path
-                d="M430 119 L463 126 L448 158"
-                stroke="#083C6B"
-                stroke-width="12"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-            />
+    <rect
+        x="94"
+        y="270"
+        width="62"
+        height="87"
+        rx="28"
+        fill="#FFFFFF"
+    />
 
+    <path
+        d="M103 290 L68 333"
+        stroke="#FFFFFF"
+        stroke-width="19"
+        stroke-linecap="round"
+    />
 
-            <!-- PERSON LEFT -->
-
-            <circle
-                cx="135"
-                cy="220"
-                r="28"
-                fill="#F6C66C"
-            />
-
-            <rect
-                x="104"
-                y="252"
-                width="62"
-                height="86"
-                rx="28"
-                fill="#FFFFFF"
-            />
-
-            <path
-                d="M112 275 L75 322"
-                stroke="#FFFFFF"
-                stroke-width="20"
-                stroke-linecap="round"
-            />
-
-            <path
-                d="M159 275 L190 320"
-                stroke="#FFFFFF"
-                stroke-width="20"
-                stroke-linecap="round"
-            />
+    <path
+        d="M148 290 L181 330"
+        stroke="#FFFFFF"
+        stroke-width="19"
+        stroke-linecap="round"
+    />
 
 
-            <!-- PERSON RIGHT -->
+    <!-- ORANG KANAN -->
+    <circle
+        cx="498"
+        cy="260"
+        r="29"
+        fill="#E6A65F"
+    />
 
-            <circle
-                cx="490"
-                cy="260"
-                r="28"
-                fill="#E5A35A"
-            />
+    <rect
+        x="467"
+        y="294"
+        width="62"
+        height="87"
+        rx="28"
+        fill="#DFF3FF"
+    />
 
-            <rect
-                x="459"
-                y="292"
-                width="62"
-                height="86"
-                rx="28"
-                fill="#DDF2FF"
-            />
+    <path
+        d="M475 313 L441 348"
+        stroke="#DFF3FF"
+        stroke-width="19"
+        stroke-linecap="round"
+    />
 
-            <path
-                d="M465 310 L430 345"
-                stroke="#DDF2FF"
-                stroke-width="20"
-                stroke-linecap="round"
-            />
-
-            <path
-                d="M515 310 L548 344"
-                stroke="#DDF2FF"
-                stroke-width="20"
-                stroke-linecap="round"
-            />
-
-
-            <!-- PERSON TOP -->
-
-            <circle
-                cx="290"
-                cy="86"
-                r="27"
-                fill="#F2BB67"
-            />
-
-            <rect
-                x="260"
-                y="116"
-                width="60"
-                height="72"
-                rx="28"
-                fill="#FFFFFF"
-                fill-opacity="0.94"
-            />
+    <path
+        d="M520 313 L550 347"
+        stroke="#DFF3FF"
+        stroke-width="19"
+        stroke-linecap="round"
+    />
 
 
-            <!-- CONNECTION NODES -->
+    <!-- ORANG ATAS -->
+    <circle
+        cx="290"
+        cy="80"
+        r="27"
+        fill="#F4BD66"
+    />
 
-            <circle
-                cx="135"
-                cy="220"
-                r="46"
-                stroke="#FFFFFF"
-                stroke-opacity="0.50"
-                stroke-width="3"
-            />
-
-            <circle
-                cx="490"
-                cy="260"
-                r="46"
-                stroke="#FFFFFF"
-                stroke-opacity="0.50"
-                stroke-width="3"
-            />
-
-            <circle
-                cx="290"
-                cy="86"
-                r="45"
-                stroke="#FFFFFF"
-                stroke-opacity="0.50"
-                stroke-width="3"
-            />
+    <rect
+        x="260"
+        y="111"
+        width="61"
+        height="74"
+        rx="29"
+        fill="#FFFFFF"
+    />
 
 
-            <!-- CONNECTION LINES -->
+    <!-- NETWORK CIRCLE -->
+    <circle
+        cx="125"
+        cy="235"
+        r="47"
+        stroke="white"
+        stroke-opacity="0.55"
+        stroke-width="3"
+    />
 
-            <path
-                d="M170 200 L260 115"
-                stroke="#FFFFFF"
-                stroke-opacity="0.50"
-                stroke-width="3"
-                stroke-dasharray="8 8"
-            />
+    <circle
+        cx="498"
+        cy="260"
+        r="47"
+        stroke="white"
+        stroke-opacity="0.55"
+        stroke-width="3"
+    />
 
-            <path
-                d="M320 105 L460 230"
-                stroke="#FFFFFF"
-                stroke-opacity="0.50"
-                stroke-width="3"
-                stroke-dasharray="8 8"
-            />
+    <circle
+        cx="290"
+        cy="80"
+        r="45"
+        stroke="white"
+        stroke-opacity="0.55"
+        stroke-width="3"
+    />
 
-            </svg>
 
-            </div>
-            """, unsafe_allow_html=True)
+    <!-- NETWORK -->
+    <path
+        d="M162 207 L257 108"
+        stroke="white"
+        stroke-opacity="0.6"
+        stroke-width="3"
+        stroke-dasharray="8 8"
+    />
+
+    <path
+        d="M326 105 L464 228"
+        stroke="white"
+        stroke-opacity="0.6"
+        stroke-width="3"
+        stroke-dasharray="8 8"
+    />
+
+
+    <!-- SMALL DOT -->
+    <circle
+        cx="182"
+        cy="126"
+        r="8"
+        fill="white"
+        fill-opacity="0.8"
+    />
+
+    <circle
+        cx="450"
+        cy="205"
+        r="7"
+        fill="white"
+        fill-opacity="0.8"
+    />
+
+</svg>
+
+</div>
+"""
+
+            st.markdown(
+                textwrap.dedent(ilustrasi),
+                unsafe_allow_html=True
+            )
 
 
 # =========================================================
