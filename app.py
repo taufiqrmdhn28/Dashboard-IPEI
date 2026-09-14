@@ -141,11 +141,12 @@ except FileNotFoundError:
 # -----------------------------------------------------------------------------
 # 4. MENU NAVIGASI (MENGGUNAKAN NATIVE TABS STREAMLIT)
 # -----------------------------------------------------------------------------
-tab_beranda, tab_tentang, tab_peta, tab_analisis = st.tabs([
+tab_beranda, tab_tentang, tab_peta, tab_analisis, tab_metadata  = st.tabs([
     "Beranda",
     "Tentang IPEI",
     "Peta IPEI", 
-    "Analisis Pilar & Tren"
+    "Analisis Pilar & Tren",
+    "Metadata"
 ])
 
 # =========================================================
@@ -673,3 +674,170 @@ with tab_tentang:
             <div class="sub-item"><span class="sub-icon">💳</span> Sub-Pilar 3.3: Keuangan Inklusif</div>
         </div>
         """, unsafe_allow_html=True)
+# =========================================================
+# ISI TAB: METADATA (DESAIN DOKUMENTASI MODERN)
+# =========================================================
+with tab_metadata:
+    # 1. Kustomisasi CSS Khusus untuk Expander (Meniru desain referensi)
+    st.markdown("""
+    <style>
+    /* Menghilangkan border kotak bawaan Streamlit agar bersih */
+    [data-testid="stExpander"] {
+        border: none;
+        border-bottom: 1px solid #f0f2f6;
+        border-radius: 0;
+        box-shadow: none;
+        background-color: transparent;
+    }
+    /* Membesarkan teks judul expander */
+    [data-testid="stExpander"] summary {
+        padding: 20px 0;
+    }
+    [data-testid="stExpander"] summary p {
+        font-size: 1.15rem;
+        font-weight: 600;
+        color: #0f172a;
+    }
+    /* Mengubah warna panah (arrow) menjadi biru terang */
+    [data-testid="stExpander"] svg {
+        color: #0ea5e9;
+        width: 1.5rem;
+        height: 1.5rem;
+    }
+    /* Styling teks di dalam expander */
+    .meta-desc {
+        color: #475569;
+        font-size: 1rem;
+        line-height: 1.6;
+        margin-bottom: 15px;
+    }
+    .meta-badge {
+        background-color: #f1f5f9;
+        color: #0b5394;
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        margin-right: 8px;
+    }
+    /* Kotak Latar Belakang Gambar Dinamis */
+    .meta-img-container {
+        padding: 30px;
+        border-radius: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 500px;
+        position: sticky;
+        top: 20px;
+    }
+    .meta-img {
+        width: 100%;
+        border-radius: 12px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        transition: all 0.5s ease;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown("<h2 style='color: #083c6b; font-weight: 800; margin-bottom: 5px;'>Kamus Data & Metadata Indikator</h2>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #64748b; margin-bottom: 25px;'>Pelajari definisi, metode perhitungan, dan sumber data dari setiap indikator penyusun IPEI.</p>", unsafe_allow_html=True)
+
+    # 2. Navigasi Pemilihan Pilar (Akan mengontrol isi teks & gambar secara otomatis)
+    pilihan_pilar = st.radio(
+        "Pilih Pilar Analisis:",
+        ["Pilar 1: Pertumbuhan & Perkembangan Ekonomi", 
+         "Pilar 2: Pemerataan Pendapatan & Kemiskinan", 
+         "Pilar 3: Perluasan Akses & Kesempatan"],
+        horizontal=True,
+        label_visibility="collapsed"
+    )
+    st.markdown("<hr style='margin-top: 10px; margin-bottom: 30px;'>", unsafe_allow_html=True)
+
+    # 3. Tata Letak Split-Layout (Kiri: List Expander, Kanan: Gambar Dinamis)
+    col_kiri, col_kanan = st.columns([1.3, 1], gap="large")
+
+    with col_kiri:
+        if pilihan_pilar == "Pilar 1: Pertumbuhan & Perkembangan Ekonomi":
+            st.markdown("<h4 style='color: #0ea5e9; font-weight: 700; margin-bottom: 10px;'>Sub-Pilar 1: Pertumbuhan Ekonomi</h4>", unsafe_allow_html=True)
+            
+            with st.expander("01. Indikator 1.1.1: Pertumbuhan PDRB riil per kapita"):
+                st.markdown("<div class='meta-desc'><span class='meta-badge'>Konsep</span> Pertumbuhan PDB/PDRB riil per kapita merupakan suatu ukuran pertumbuhan ekonomi individu secara rata-rata di suatu wilayah[cite: 1]. Semakin tinggi sebuah pertumbuhan ekonomi, semakin baik kesejahteraan individu[cite: 1].</div>", unsafe_allow_html=True)
+                st.markdown("<div class='meta-desc'><span class='meta-badge'>Metode</span> Angka didapatkan dari nilai PDB/PDRB atas dasar harga konstan dibagi dengan jumlah penduduk dalam suatu wilayah per periode tertentu[cite: 1].</div>", unsafe_allow_html=True)
+                st.markdown("<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik Nasional[cite: 1].</div>", unsafe_allow_html=True)
+
+            with st.expander("02. Indikator 1.1.2: Share manufaktur terhadap PDRB"):
+                st.markdown("<div class='meta-desc'><span class='meta-badge'>Konsep</span> Share (besaran) sektor manufaktur terhadap PDB/PDRB adalah persentase porsi sektor manufaktur terhadap keseluruhan PDB/PDRB[cite: 1].</div>", unsafe_allow_html=True)
+                st.markdown("<div class='meta-desc'><span class='meta-badge'>Metode</span> (PDB Industri Pengolahan / Total PDB) x 100%[cite: 1].</div>", unsafe_allow_html=True)
+                st.markdown("<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik Nasional[cite: 1].</div>", unsafe_allow_html=True)
+                
+            with st.expander("03. Indikator 1.1.3: Rasio Kredit Perbankan terhadap PDRB"):
+                st.markdown("<div class='meta-desc'><span class='meta-badge'>Konsep</span> Dihitung dari total kredit terhadap total PDRB yang menunjukkan perbandingan antara total pemberian kredit terhadap produktivitas ekonomi[cite: 1].</div>", unsafe_allow_html=True)
+                st.markdown("<div class='meta-desc'><span class='meta-badge'>Metode</span> Total Kredit / Total PDB (PDRB)[cite: 1].</div>", unsafe_allow_html=True)
+                st.markdown("<div class='meta-desc'><span class='meta-badge'>Sumber</span> Otoritas Jasa Keuangan[cite: 1].</div>", unsafe_allow_html=True)
+
+            st.markdown("<br><h4 style='color: #0ea5e9; font-weight: 700; margin-bottom: 10px;'>Sub-Pilar 2: Kesempatan Kerja</h4>", unsafe_allow_html=True)
+            with st.expander("04. Indikator 1.2.1: Tingkat kesempatan kerja"):
+                st.markdown("<div class='meta-desc'><span class='meta-badge'>Konsep</span> Tingkat kesempatan kerja (TKK) menggambarkan peluang seorang individu yang termasuk dalam angkatan kerja untuk bisa terserap dalam pasar kerja atau dapat bekerja[cite: 1].</div>", unsafe_allow_html=True)
+                st.markdown("<div class='meta-desc'><span class='meta-badge'>Metode</span> (Penduduk bekerja / Angkatan kerja) x 100%[cite: 1].</div>", unsafe_allow_html=True)
+                st.markdown("<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik (Sakernas)[cite: 1].</div>", unsafe_allow_html=True)
+
+        elif pilihan_pilar == "Pilar 2: Pemerataan Pendapatan & Kemiskinan":
+            st.markdown("<h4 style='color: #0ea5e9; font-weight: 700; margin-bottom: 10px;'>Sub-Pilar 1: Ketimpangan</h4>", unsafe_allow_html=True)
+            
+            with st.expander("01. Indikator 2.1.1: Rasio Pendapatan Gini"):
+                st.markdown("<div class='meta-desc'><span class='meta-badge'>Konsep</span> Rasio Gini merupakan indikator yang menunjukkan tingkat ketimpangan pendapatan secara menyeluruh[cite: 1]. Nilai Koefisien Gini berkisar antara 0 - 1[cite: 1].</div>", unsafe_allow_html=True)
+                st.markdown("<div class='meta-desc'><span class='meta-badge'>Metode</span> Didasarkan pada pengukuran luas kurva Lorenz, yaitu sebuah kurva pengeluaran kumulatif yang membandingkan distribusi dari variabel pendapatan dengan distribusi kumulatif penduduk[cite: 1].</div>", unsafe_allow_html=True)
+                st.markdown("<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik[cite: 1].</div>", unsafe_allow_html=True)
+
+            with st.expander("02. Indikator 2.1.3: Rasio Rata-rata Pengeluaran Desa dan Kota"):
+                st.markdown("<div class='meta-desc'><span class='meta-badge'>Konsep</span> Menunjukkan perbandingan rata-rata pengeluaran rumah tangga pedesaan terhadap rumah tangga perkotaan[cite: 1]. Menggambarkan disparitas antara wilayah pedesaan dan perkotaan[cite: 1].</div>", unsafe_allow_html=True)
+                st.markdown("<div class='meta-desc'><span class='meta-badge'>Metode</span> Rata-rata pengeluaran penduduk desa / Rata-rata pengeluaran penduduk kota[cite: 1].</div>", unsafe_allow_html=True)
+                st.markdown("<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik (Susenas)[cite: 1].</div>", unsafe_allow_html=True)
+
+            st.markdown("<br><h4 style='color: #0ea5e9; font-weight: 700; margin-bottom: 10px;'>Sub-Pilar 2: Kemiskinan</h4>", unsafe_allow_html=True)
+            with st.expander("03. Indikator 2.2.1: Persentase Penduduk Miskin"):
+                st.markdown("<div class='meta-desc'><span class='meta-badge'>Konsep</span> Penduduk miskin adalah penduduk yang memiliki rata-rata pengeluaran per kapita per bulan di bawah garis kemiskinan[cite: 1].</div>", unsafe_allow_html=True)
+                st.markdown("<div class='meta-desc'><span class='meta-badge'>Metode</span> (Jumlah penduduk miskin / Jumlah penduduk) x 100%[cite: 1].</div>", unsafe_allow_html=True)
+                st.markdown("<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik[cite: 1].</div>", unsafe_allow_html=True)
+
+        elif pilihan_pilar == "Pilar 3: Perluasan Akses & Kesempatan":
+            st.markdown("<h4 style='color: #0ea5e9; font-weight: 700; margin-bottom: 10px;'>Sub-Pilar 1: Kapabilitas Manusia</h4>", unsafe_allow_html=True)
+            
+            with st.expander("01. Indikator 3.1.1: Angka Harapan Lama Sekolah"):
+                st.markdown("<div class='meta-desc'><span class='meta-badge'>Konsep</span> Angka Harapan Lama Sekolah (HLS) didefinisikan sebagai lamanya sekolah yang diharapkan akan dirasakan oleh anak pada umur tertentu di masa mendatang[cite: 1].</div>", unsafe_allow_html=True)
+                st.markdown("<div class='meta-desc'><span class='meta-badge'>Metode</span> Dihitung menggunakan rasio penduduk yang bersekolah dikalikan dengan Faktor Koreksi Pesantren[cite: 1].</div>", unsafe_allow_html=True)
+                st.markdown("<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik[cite: 1].</div>", unsafe_allow_html=True)
+
+            with st.expander("02. Indikator 3.1.3: Persentase Penduduk Memiliki Jaminan Kesehatan"):
+                st.markdown("<div class='meta-desc'><span class='meta-badge'>Konsep</span> Menunjukkan besaran cakupan jaminan kesehatan pada masyarakat yang bersifat sebagai jaring pengaman[cite: 1].</div>", unsafe_allow_html=True)
+                st.markdown("<div class='meta-desc'><span class='meta-badge'>Metode</span> (Jumlah Penduduk yang Memiliki Jaminan Kesehatan / Jumlah Penduduk) x 100%[cite: 1].</div>", unsafe_allow_html=True)
+                st.markdown("<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik[cite: 1].</div>", unsafe_allow_html=True)
+
+            st.markdown("<br><h4 style='color: #0ea5e9; font-weight: 700; margin-bottom: 10px;'>Sub-Pilar 2: Infrastruktur Dasar</h4>", unsafe_allow_html=True)
+            with st.expander("03. Indikator 3.2.1: Rumah Tangga dengan Sumber Air Minum Layak"):
+                st.markdown("<div class='meta-desc'><span class='meta-badge'>Konsep</span> Proporsi rumah tangga dengan akses berkelanjutan terhadap air minum layak[cite: 1]. Digunakan untuk memantau akses penduduk terhadap sumber air berkualitas[cite: 1].</div>", unsafe_allow_html=True)
+                st.markdown("<div class='meta-desc'><span class='meta-badge'>Metode</span> (Rumah Tangga dengan air minum layak / Rumah tangga seluruhnya) x 100%[cite: 1].</div>", unsafe_allow_html=True)
+                st.markdown("<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik[cite: 1].</div>", unsafe_allow_html=True)
+
+    with col_kanan:
+        # 4. Rendering Gambar Dinamis berdasarkan pilihan Radio Button (Pilar)
+        if pilihan_pilar == "Pilar 1: Pertumbuhan & Perkembangan Ekonomi":
+            st.markdown('''
+            <div class="meta-img-container" style="background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);">
+                <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=800&auto=format&fit=crop" class="meta-img" alt="Pilar 1 Ilustrasi">
+            </div>
+            ''', unsafe_allow_html=True)
+        elif pilihan_pilar == "Pilar 2: Pemerataan Pendapatan & Kemiskinan":
+            st.markdown('''
+            <div class="meta-img-container" style="background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);">
+                <img src="https://images.unsplash.com/photo-1601597111158-2fceff292cdc?q=80&w=800&auto=format&fit=crop" class="meta-img" alt="Pilar 2 Ilustrasi">
+            </div>
+            ''', unsafe_allow_html=True)
+        else:
+            st.markdown('''
+            <div class="meta-img-container" style="background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);">
+                <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=800&auto=format&fit=crop" class="meta-img" alt="Pilar 3 Ilustrasi">
+            </div>
+            ''', unsafe_allow_html=True)
+
