@@ -678,7 +678,7 @@ with tab_tentang:
 # ISI TAB: METADATA (DESAIN DOKUMENTASI MODERN)
 # =========================================================
 with tab_metadata:
-    # 1. Kustomisasi CSS Khusus untuk Expander
+    # 1. Kustomisasi CSS Khusus untuk Expander & Gambar Sticky
     st.markdown("""
     <style>
     [data-testid="stExpander"] {
@@ -698,13 +698,33 @@ with tab_metadata:
         background-color: #f1f5f9; color: #0b5394; padding: 3px 8px;
         border-radius: 6px; font-weight: 700; font-size: 0.85rem; margin-right: 8px;
     }
-    .meta-img-container {
-        padding: 30px; border-radius: 20px; display: flex; justify-content: center;
-        align-items: center; min-height: 500px; position: sticky; top: 20px;
+    
+    /* Membuat wadah abu-abu ikut terscroll (Sticky) */
+    .sticky-right-container {
+        position: -webkit-sticky;
+        position: sticky;
+        top: 80px; /* Jarak dari atas layar saat menempel */
+        background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+        padding: 40px 30px;
+        border-radius: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        z-index: 10;
     }
-    .meta-img {
-        width: 100%; border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-        transition: all 0.5s ease;
+    
+    /* Animasi Mengambang (Floating) untuk Gambar 3D */
+    @keyframes float-meta {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-12px); }
+        100% { transform: translateY(0px); }
+    }
+    .floating-meta-img {
+        width: 100%;
+        max-width: 450px;
+        animation: float-meta 4s ease-in-out infinite;
+        filter: drop-shadow(0 15px 25px rgba(0,0,0,0.15));
     }
     </style>
     """, unsafe_allow_html=True)
@@ -844,23 +864,24 @@ with tab_metadata:
                 st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Otoritas Jasa Keuangan / Bank Indonesia[cite: 1].</div>", unsafe_allow_html=True)
 
     with col_kanan:
-        # 4. Rendering Gambar Dinamis berdasarkan pilihan Radio Button (Pilar)
+        # 4. Rendering Gambar Dinamis dengan Sticky Behavior
+        # File gambar dinamakan sesuai pilar: Pilar 1.png, Pilar 2.png, Pilar 3.png
         if pilihan_pilar == "Pilar 1: Pertumbuhan & Perkembangan Ekonomi":
-            st.markdown('''
-            <div class="meta-img-container" style="background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);">
-                <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=800&auto=format&fit=crop" class="meta-img" alt="Pilar 1 Ilustrasi">
-            </div>
-            ''', unsafe_allow_html=True)
+            nama_file_gambar = "Pilar 1.png"
         elif pilihan_pilar == "Pilar 2: Pemerataan Pendapatan & Kemiskinan":
-            st.markdown('''
-            <div class="meta-img-container" style="background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);">
-                <img src="https://images.unsplash.com/photo-1601597111158-2fceff292cdc?q=80&w=800&auto=format&fit=crop" class="meta-img" alt="Pilar 2 Ilustrasi">
-            </div>
-            ''', unsafe_allow_html=True)
+            nama_file_gambar = "Pilar 2.png"
         else:
-            st.markdown('''
-            <div class="meta-img-container" style="background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);">
-                <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=800&auto=format&fit=crop" class="meta-img" alt="Pilar 3 Ilustrasi">
+            nama_file_gambar = "Pilar 3.png"
+
+        try:
+            with open(nama_file_gambar, "rb") as img_file:
+                encoded_img = base64.b64encode(img_file.read()).decode()
+            
+            st.markdown(f'''
+            <div class="sticky-right-container">
+                <img src="data:image/png;base64,{encoded_img}" class="floating-meta-img" alt="{nama_file_gambar}">
             </div>
             ''', unsafe_allow_html=True)
+        except FileNotFoundError:
+            st.warning(f"⚠️ File '{nama_file_gambar}' tidak ditemukan di folder. Pastikan penamaan file sudah persis sama.")
 
