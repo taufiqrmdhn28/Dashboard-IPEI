@@ -809,7 +809,7 @@ with tab_metadata:
                 st.warning(f"⚠️ File '{nama_file_gambar}' tidak ditemukan.")
 
     # --- BAGIAN 2: TABEL DATA DINAMIS (ALA BPS) ---
-   with subtab_tabel:
+    with subtab_tabel:
         st.markdown("<h2 style='color: #083c6b; font-weight: 800; margin-bottom: 5px; margin-top: 10px;'>Tabel Dinamis IPEI</h2>", unsafe_allow_html=True)
         st.markdown("<p style='color: #64748b; margin-bottom: 25px;'>Gunakan fitur ini untuk mengekstrak dan mengunduh data mentah (*raw data*) berdasarkan indikator, tahun, dan wilayah spesifik.</p>", unsafe_allow_html=True)
         
