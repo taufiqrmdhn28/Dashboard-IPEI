@@ -507,15 +507,6 @@ with tab_analisis:
             st.markdown(buat_tabel_historis(df_prov_chart, komponen), unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
             
-            # --- FITUR DOWNLOAD FULL DATA (MENGABAIKAN FILTER) ---
-            csv_prov_all = df_provinsi.to_csv(index=False).encode('utf-8')
-            st.download_button(
-                label="📥 Unduh Seluruh Data Provinsi (CSV)",
-                data=csv_prov_all,
-                file_name="Data_IPEI_Seluruh_Provinsi.csv",
-                mime='text/csv',
-                use_container_width=True
-            )
         else:
             st.warning("Data tidak tersedia untuk wilayah ini.")
 
@@ -552,15 +543,6 @@ with tab_analisis:
             st.markdown(buat_tabel_historis(df_kab_chart, komponen_kab), unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
             
-            # --- FITUR DOWNLOAD FULL DATA (MENGABAIKAN FILTER) ---
-            csv_kab_all = df_kabkota.to_csv(index=False).encode('utf-8')
-            st.download_button(
-                label="📥 Unduh Seluruh Data Kabupaten/Kota (CSV)",
-                data=csv_kab_all,
-                file_name="Data_IPEI_Seluruh_Kabupaten.csv",
-                mime='text/csv',
-                use_container_width=True
-            )
         else:
             st.warning("Data tidak tersedia untuk wilayah ini.")
 
@@ -678,210 +660,267 @@ with tab_tentang:
 # ISI TAB: METADATA (DESAIN DOKUMENTASI MODERN)
 # =========================================================
 with tab_metadata:
-    # 1. Kustomisasi CSS Khusus untuk Expander & Gambar Sticky
-    st.markdown("""
-    <style>
-    [data-testid="stExpander"] {
-        border: none;
-        border-bottom: 1px solid #f0f2f6;
-        border-radius: 0;
-        box-shadow: none;
-        background-color: transparent;
-    }
-    [data-testid="stExpander"] summary { padding: 20px 0; }
-    [data-testid="stExpander"] summary p {
-        font-size: 1.15rem; font-weight: 600; color: #0f172a;
-    }
-    [data-testid="stExpander"] svg { color: #0ea5e9; width: 1.5rem; height: 1.5rem; }
-    .meta-desc { color: #475569; font-size: 1rem; line-height: 1.6; margin-bottom: 15px; }
-    .meta-badge {
-        background-color: #f1f5f9; color: #0b5394; padding: 3px 8px;
-        border-radius: 6px; font-weight: 700; font-size: 0.85rem; margin-right: 8px;
-    }
-    
-    /* Membuat wadah abu-abu ikut terscroll (Sticky) */
-    .sticky-right-container {
-        position: -webkit-sticky;
-        position: sticky;
-        top: 80px; /* Jarak dari atas layar saat menempel */
-        background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
-        padding: 40px 30px;
-        border-radius: 20px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-        z-index: 10;
-    }
-    
-    /* Animasi Mengambang (Floating) untuk Gambar 3D */
-    @keyframes float-meta {
-        0% { transform: translateY(0px); }
-        50% { transform: translateY(-12px); }
-        100% { transform: translateY(0px); }
-    }
-    .floating-meta-img {
-        width: 100%;
-        max-width: 450px;
-        animation: float-meta 4s ease-in-out infinite;
-        filter: drop-shadow(0 15px 25px rgba(0,0,0,0.15));
-    }
-    </style>
-    """, unsafe_allow_html=True)
+    # Membelah Metadata menjadi 2 Sub-Tab
+    subtab_kamus, subtab_tabel = st.tabs(["📖 Kamus Data & Metadata", "🗄️ Tabel Data Dinamis"])
 
-    st.markdown("<h2 style='color: #083c6b; font-weight: 800; margin-bottom: 5px;'>Kamus Data & Metadata Indikator</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='color: #64748b; margin-bottom: 25px;'>Pelajari definisi, metode perhitungan, dan sumber data dari seluruh 21 indikator penyusun IPEI.</p>", unsafe_allow_html=True)
+    # --- BAGIAN 1: KAMUS DATA & METADATA ---
+    with subtab_kamus:
+        st.markdown("""
+        <style>
+        [data-testid="stExpander"] { border: none; border-bottom: 1px solid #f0f2f6; border-radius: 0; box-shadow: none; background-color: transparent; }
+        [data-testid="stExpander"] summary { padding: 20px 0; }
+        [data-testid="stExpander"] summary p { font-size: 1.15rem; font-weight: 600; color: #0f172a; }
+        [data-testid="stExpander"] svg { color: #0ea5e9; width: 1.5rem; height: 1.5rem; }
+        .meta-desc { color: #475569; font-size: 1rem; line-height: 1.6; margin-bottom: 15px; }
+        .meta-badge { background-color: #f1f5f9; color: #0b5394; padding: 3px 8px; border-radius: 6px; font-weight: 700; font-size: 0.85rem; margin-right: 8px; }
+        .sticky-right-container { position: -webkit-sticky; position: sticky; top: 80px; background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); padding: 40px 30px; border-radius: 20px; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.03); z-index: 10; }
+        @keyframes float-meta { 0% { transform: translateY(0px); } 50% { transform: translateY(-12px); } 100% { transform: translateY(0px); } }
+        .floating-meta-img { width: 100%; max-width: 450px; animation: float-meta 4s ease-in-out infinite; filter: drop-shadow(0 15px 25px rgba(0,0,0,0.15)); }
+        </style>
+        """, unsafe_allow_html=True)
 
-    # 2. Navigasi Pemilihan Pilar
-    pilihan_pilar = st.radio(
-        "Pilih Pilar Analisis:",
-        ["Pilar 1: Pertumbuhan & Perkembangan Ekonomi", 
-         "Pilar 2: Pemerataan Pendapatan & Kemiskinan", 
-         "Pilar 3: Perluasan Akses & Kesempatan"],
-        horizontal=True,
-        label_visibility="collapsed"
-    )
-    st.markdown("<hr style='margin-top: 10px; margin-bottom: 30px;'>", unsafe_allow_html=True)
+        st.markdown("<h2 style='color: #083c6b; font-weight: 800; margin-bottom: 5px; margin-top: 10px;'>Kamus Data & Metadata Indikator</h2>", unsafe_allow_html=True)
+        st.markdown("<p style='color: #64748b; margin-bottom: 25px;'>Pelajari definisi, metode perhitungan, dan sumber data dari seluruh 21 indikator penyusun IPEI.</p>", unsafe_allow_html=True)
 
-    # 3. Tata Letak Split-Layout
-    col_kiri, col_kanan = st.columns([1.3, 1], gap="large")
+        pilihan_pilar = st.radio("Pilih Pilar Analisis:", ["Pilar 1: Pertumbuhan & Perkembangan Ekonomi", "Pilar 2: Pemerataan Pendapatan & Kemiskinan", "Pilar 3: Perluasan Akses & Kesempatan"], horizontal=True, label_visibility="collapsed")
+        st.markdown("<hr style='margin-top: 10px; margin-bottom: 30px;'>", unsafe_allow_html=True)
 
-    with col_kiri:
-        if pilihan_pilar == "Pilar 1: Pertumbuhan & Perkembangan Ekonomi":
-            st.markdown("<h4 style='color: #0ea5e9; font-weight: 700; margin-bottom: 10px;'>Sub-Pilar 1.1: Pertumbuhan Ekonomi</h4>", unsafe_allow_html=True)
-            with st.expander("01. Indikator 1.1.1: Pertumbuhan PDRB riil per kapita"):
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Ukuran pertumbuhan ekonomi individu secara rata-rata di suatu wilayah[cite: 1]. Semakin tinggi, semakin baik kesejahteraan individu[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $Pertumbuhan~PDRB~per~kapita=\frac{Y_{t}-Y_{t-1}}{Y_{t-1}}\times100\%$[cite: 1]. Angka ini didapatkan dari nilai PDB/PDRB harga konstan dibagi jumlah penduduk[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik Nasional[cite: 1].</div>", unsafe_allow_html=True)
+        col_kiri, col_kanan = st.columns([1.3, 1], gap="large")
 
-            with st.expander("02. Indikator 1.1.2: Share manufaktur terhadap PDRB"):
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Persentase porsi sektor industri manufaktur/pengolahan terhadap keseluruhan PDB/PDRB[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $\frac{PDB(PDRB)~Industri~Pengolahan}{Total~PDB(PDRB)}\times100\%$[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik Nasional[cite: 1].</div>", unsafe_allow_html=True)
-                
-            with st.expander("03. Indikator 1.1.3: Rasio Kredit Perbankan terhadap PDRB Nominal"):
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Perbandingan antara total pemberian kredit terhadap produktivitas ekonomi[cite: 1]. Menilai seberapa besar pinjaman atas total produksi[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $\frac{Total~Kredit}{Total~PDB(PDRB)}$[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Otoritas Jasa Keuangan[cite: 1].</div>", unsafe_allow_html=True)
+        with col_kiri:
+            if pilihan_pilar == "Pilar 1: Pertumbuhan & Perkembangan Ekonomi":
+                st.markdown("<h4 style='color: #0ea5e9; font-weight: 700; margin-bottom: 10px;'>Sub-Pilar 1.1: Pertumbuhan Ekonomi</h4>", unsafe_allow_html=True)
+                with st.expander("01. Indikator 1.1.1: Pertumbuhan PDRB riil per kapita"):
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Ukuran pertumbuhan ekonomi individu secara rata-rata di suatu wilayah[cite: 1]. Semakin tinggi, semakin baik kesejahteraan individu[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $Pertumbuhan~PDRB~per~kapita=\frac{Y_{t}-Y_{t-1}}{Y_{t-1}}\times100\%$[cite: 1]. Angka ini didapatkan dari nilai PDB/PDRB harga konstan dibagi jumlah penduduk[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik Nasional[cite: 1].</div>", unsafe_allow_html=True)
+                with st.expander("02. Indikator 1.1.2: Share manufaktur terhadap PDRB"):
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Persentase porsi sektor industri manufaktur/pengolahan terhadap keseluruhan PDB/PDRB[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $\frac{PDB(PDRB)~Industri~Pengolahan}{Total~PDB(PDRB)}\times100\%$[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik Nasional[cite: 1].</div>", unsafe_allow_html=True)
+                with st.expander("03. Indikator 1.1.3: Rasio Kredit Perbankan terhadap PDRB Nominal"):
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Perbandingan antara total pemberian kredit terhadap produktivitas ekonomi[cite: 1]. Menilai seberapa besar pinjaman atas total produksi[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $\frac{Total~Kredit}{Total~PDB(PDRB)}$[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Otoritas Jasa Keuangan[cite: 1].</div>", unsafe_allow_html=True)
 
-            st.markdown("<br><h4 style='color: #0ea5e9; font-weight: 700; margin-bottom: 10px;'>Sub-Pilar 1.2: Kesempatan Kerja</h4>", unsafe_allow_html=True)
-            with st.expander("04. Indikator 1.2.1: Tingkat kesempatan kerja"):
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Menggambarkan peluang seorang individu yang termasuk dalam angkatan kerja untuk bisa terserap dalam pasar kerja atau dapat bekerja[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $\frac{penduduk~bekerja}{angkatan~kerja}\times100\%$[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik (Sakernas)[cite: 1].</div>", unsafe_allow_html=True)
+                st.markdown("<br><h4 style='color: #0ea5e9; font-weight: 700; margin-bottom: 10px;'>Sub-Pilar 1.2: Kesempatan Kerja</h4>", unsafe_allow_html=True)
+                with st.expander("04. Indikator 1.2.1: Tingkat kesempatan kerja"):
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Menggambarkan peluang seorang individu yang termasuk dalam angkatan kerja untuk bisa terserap dalam pasar kerja atau dapat bekerja[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $\frac{penduduk~bekerja}{angkatan~kerja}\times100\%$[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik (Sakernas)[cite: 1].</div>", unsafe_allow_html=True)
+                with st.expander("05. Indikator 1.2.2: Persentase Penduduk Bekerja Penuh"):
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Pekerja penuh adalah pekerja yang jam kerjanya $\ge$ 35 jam per minggu (pekerja formal) yang menunjukkan pekerjaan relatif stabil[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $\frac{Penduduk~Bekerja~\ge~35~jam/mg}{Penduduk~bekerja}\times100\%$[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik (Sakernas)[cite: 1].</div>", unsafe_allow_html=True)
+                with st.expander("06. Indikator 1.2.3: Persentase Tenaga Kerja dg Pendidikan Menengah ke Atas"):
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Tenaga kerja dengan ijazah terakhir SMA/SMK/MA/Sederajat atau lebih tinggi yang menunjukkan kualitas pekerja yang lebih baik[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $\frac{Tenaga~kerja~dg~tk~Pendidikan~Menengah~ke~Atas}{Penduduk~bekerja}\times100\%$[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik (Sakernas)[cite: 1].</div>", unsafe_allow_html=True)
 
-            with st.expander("05. Indikator 1.2.2: Persentase Penduduk Bekerja Penuh"):
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Pekerja penuh adalah pekerja yang jam kerjanya $\ge$ 35 jam per minggu (pekerja formal) yang menunjukkan pekerjaan relatif stabil[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $\frac{Penduduk~Bekerja~\ge~35~jam/mg}{Penduduk~bekerja}\times100\%$[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik (Sakernas)[cite: 1].</div>", unsafe_allow_html=True)
+                st.markdown("<br><h4 style='color: #0ea5e9; font-weight: 700; margin-bottom: 10px;'>Sub-Pilar 1.3: Infrastruktur Ekonomi</h4>", unsafe_allow_html=True)
+                with st.expander("07. Indikator 1.3.1: Persentase Rumah Tangga yang Menggunakan Listrik/PLN"):
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Persentase rumah tangga yang di rumahnya sudah tersedia jaringan listrik/PLN terhadap total rumah tangga secara keseluruhan[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $\frac{Rumah~tangga~dengan~akses~listrik~(PLN)}{Rumah~tangga}\times100\%$[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik (Susenas)[cite: 1].</div>", unsafe_allow_html=True)
+                with st.expander("08. Indikator 1.3.2: Persentase Penduduk yang Memiliki Telepon Genggam"):
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Persentase penduduk yang memiliki atau menguasai telepon seluler, menunjukkan kecakapan penggunaan perangkat telekomunikasi[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $\frac{Penduduk~yang~memiliki~ponsel}{Penduduk}\times100\%$[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik (Susenas)[cite: 1].</div>", unsafe_allow_html=True)
+                with st.expander("09. Indikator 1.3.3: Persentase Jalan dengan Kondisi Baik dan Sedang"):
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Persentase diukur dari total panjang jalan dengan kondisi baik dan sedang terhadap luas wilayah[cite: 1]. Mencerminkan keterjangkauan infrastruktur jalan[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $\frac{Panjang~jalan~baik}{Total~Luas~Wilayah}\times100\%$[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik (Kementerian Pekerjaan Umum, Dinas PU)[cite: 1].</div>", unsafe_allow_html=True)
 
-            with st.expander("06. Indikator 1.2.3: Persentase Tenaga Kerja dg Pendidikan Menengah ke Atas"):
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Tenaga kerja dengan ijazah terakhir SMA/SMK/MA/Sederajat atau lebih tinggi yang menunjukkan kualitas pekerja yang lebih baik[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $\frac{Tenaga~kerja~dg~tk~Pendidikan~Menengah~ke~Atas}{Penduduk~bekerja}\times100\%$[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik (Sakernas)[cite: 1].</div>", unsafe_allow_html=True)
+            elif pilihan_pilar == "Pilar 2: Pemerataan Pendapatan & Kemiskinan":
+                st.markdown("<h4 style='color: #0ea5e9; font-weight: 700; margin-bottom: 10px;'>Sub-Pilar 2.1: Ketimpangan</h4>", unsafe_allow_html=True)
+                with st.expander("01. Indikator 2.1.1: Rasio Pendapatan Gini"):
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Indikator yang menunjukkan tingkat ketimpangan pendapatan secara menyeluruh berdasarkan pengukuran luas kurva Lorenz[cite: 1]. Nilai berkisar antara 0 - 1[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $GR=1-\Sigma_{i=1}^{n}P_{i}(F_{i}+F_{i-1})$[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik[cite: 1].</div>", unsafe_allow_html=True)
+                with st.expander("02. Indikator 2.1.2: Sumbangan Pendapatan Perempuan"):
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Indikator yang menggambarkan seberapa besar diskriminasi upah yang terjadi antara laki-laki dan perempuan[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $X=AK_{f}\times Rasio~W_{f}$[cite: 1]. Dihitung dari proporsi angkatan kerja perempuan dikalikan rasio upah perempuan terhadap rata-rata upah[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik (Sakernas)[cite: 1].</div>", unsafe_allow_html=True)
+                with st.expander("03. Indikator 2.1.3: Rasio Rata-rata Pengeluaran Rumah Tangga Desa & Kota"):
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Menunjukkan perbandingan rata-rata pengeluaran rumah tangga pedesaan terhadap rumah tangga perkotaan, yang menggambarkan disparitas wilayah[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $\frac{rata-rata~pengeluaran~penduduk~desa}{rata-rata~pengeluaran~penduduk~kota}$[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik (Susenas)[cite: 1].</div>", unsafe_allow_html=True)
 
-            st.markdown("<br><h4 style='color: #0ea5e9; font-weight: 700; margin-bottom: 10px;'>Sub-Pilar 1.3: Infrastruktur Ekonomi</h4>", unsafe_allow_html=True)
-            with st.expander("07. Indikator 1.3.1: Persentase Rumah Tangga yang Menggunakan Listrik/PLN"):
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Persentase rumah tangga yang di rumahnya sudah tersedia jaringan listrik/PLN terhadap total rumah tangga secara keseluruhan[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $\frac{Rumah~tangga~dengan~akses~listrik~(PLN)}{Rumah~tangga}\times100\%$[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik (Susenas)[cite: 1].</div>", unsafe_allow_html=True)
+                st.markdown("<br><h4 style='color: #0ea5e9; font-weight: 700; margin-bottom: 10px;'>Sub-Pilar 2.2: Kemiskinan</h4>", unsafe_allow_html=True)
+                with st.expander("04. Indikator 2.2.1: Persentase Penduduk Miskin"):
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Persentase penduduk miskin merupakan jumlah orang yang hidup di bawah garis kemiskinan per kapita per bulan[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $\frac{Jumlah~penduduk~miskin}{Jumlah~penduduk}\times100\%$[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik (Susenas)[cite: 1].</div>", unsafe_allow_html=True)
+                with st.expander("05. Indikator 2.2.2: Rata-rata Konsumsi Protein per kapita per hari"):
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Jumlah konsumsi protein dari komoditi pangan yang dikonsumsi penduduk di satu wilayah secara rata-rata[cite: 1]. Menunjukkan perbaikan kesejahteraan[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $\frac{Jumlah~konsumsi~protein}{Jumlah~penduduk}$[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik (Susenas)[cite: 1].</div>", unsafe_allow_html=True)
 
-            with st.expander("08. Indikator 1.3.2: Persentase Penduduk yang Memiliki Telepon Genggam"):
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Persentase penduduk yang memiliki atau menguasai telepon seluler, menunjukkan kecakapan penggunaan perangkat telekomunikasi[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $\frac{Penduduk~yang~memiliki~ponsel}{Penduduk}\times100\%$[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik (Susenas)[cite: 1].</div>", unsafe_allow_html=True)
+            elif pilihan_pilar == "Pilar 3: Perluasan Akses & Kesempatan":
+                st.markdown("<h4 style='color: #0ea5e9; font-weight: 700; margin-bottom: 10px;'>Sub-Pilar 3.1: Kapabilitas Manusia</h4>", unsafe_allow_html=True)
+                with st.expander("01. Indikator 3.1.1: Angka Harapan Lama Sekolah"):
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Lamanya sekolah yang diharapkan akan dirasakan oleh anak pada umur tertentu (7 tahun ke atas) di masa mendatang[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $HLS_{a}^{t}=FK\times\Sigma_{i=a}^{n}\frac{E_{i}^{c}}{P_{i}^{t}}$[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik (Susenas)[cite: 1].</div>", unsafe_allow_html=True)
+                with st.expander("02. Indikator 3.1.2: Persentase Balita Mendapatkan Imunisasi Dasar Lengkap"):
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Menggambarkan tingkat pelayanan imunisasi dasar lengkap (DPT, polio, BCG, campak) pada balita di bawah usia 5 tahun[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $\frac{Jumlah~balita~dengan~imunisasi~dasar~lengkap}{Jumlah~anak~usia<5~tahun}\times100\%$[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik (Susenas / Riskesdas)[cite: 1].</div>", unsafe_allow_html=True)
+                with st.expander("03. Indikator 3.1.3: Persentase Penduduk yang Memiliki Jaminan Kesehatan"):
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Besaran cakupan jaminan kesehatan pada masyarakat yang bersifat sebagai jaring pengaman ketika mengalami kendala kesehatan[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $\frac{Jumlah~Penduduk~yang~Memiliki~Jaminan~Kesehatan}{Jumlah~Penduduk}\times100\%$[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik (Susenas)[cite: 1].</div>", unsafe_allow_html=True)
 
-            with st.expander("09. Indikator 1.3.3: Persentase Jalan dengan Kondisi Baik dan Sedang"):
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Persentase diukur dari total panjang jalan dengan kondisi baik dan sedang terhadap luas wilayah[cite: 1]. Mencerminkan keterjangkauan infrastruktur jalan[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $\frac{Panjang~jalan~baik}{Total~Luas~Wilayah}\times100\%$[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik (Kementerian Pekerjaan Umum, Dinas PU)[cite: 1].</div>", unsafe_allow_html=True)
+                st.markdown("<br><h4 style='color: #0ea5e9; font-weight: 700; margin-bottom: 10px;'>Sub-Pilar 3.2: Infrastruktur Dasar</h4>", unsafe_allow_html=True)
+                with st.expander("04. Indikator 3.2.1: Persentase Rumah Tangga dengan Sumber Air Minum Layak"):
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Proporsi rumah tangga dengan akses berkelanjutan terhadap air minum berkualitas/layak dibandingkan rumah tangga seluruhnya[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $\frac{Rumah~Tangga~dengan~air~minum~layak}{Rumah~tangga~seluruhnya}\times100\%$[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik (Susenas)[cite: 1].</div>", unsafe_allow_html=True)
+                with st.expander("05. Indikator 3.2.2: Rumah Tangga dengan Fasilitas Tempat Buang Air Sendiri"):
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Proporsi rumah tangga memiliki fasilitas buang air sendiri (jamban/toilet) sebagai salah satu syarat sanitasi yang layak[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $\frac{Rumah~Tangga~dengan~fasilitas~buang~air~sendiri}{Rumah~tangga~seluruhnya}\times100\%$[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik (Susenas)[cite: 1].</div>", unsafe_allow_html=True)
 
-        elif pilihan_pilar == "Pilar 2: Pemerataan Pendapatan & Kemiskinan":
-            st.markdown("<h4 style='color: #0ea5e9; font-weight: 700; margin-bottom: 10px;'>Sub-Pilar 2.1: Ketimpangan</h4>", unsafe_allow_html=True)
-            with st.expander("01. Indikator 2.1.1: Rasio Pendapatan Gini"):
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Indikator yang menunjukkan tingkat ketimpangan pendapatan secara menyeluruh berdasarkan pengukuran luas kurva Lorenz[cite: 1]. Nilai berkisar antara 0 - 1[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $GR=1-\Sigma_{i=1}^{n}P_{i}(F_{i}+F_{i-1})$[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik[cite: 1].</div>", unsafe_allow_html=True)
+                st.markdown("<br><h4 style='color: #0ea5e9; font-weight: 700; margin-bottom: 10px;'>Sub-Pilar 3.3: Keuangan Inklusif</h4>", unsafe_allow_html=True)
+                with st.expander("06. Indikator 3.3.1: Rasio Jumlah Rekening DPK terhadap Penduduk Usia Produktif"):
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Pembagian jumlah total rekening Dana Pihak Ketiga (DPK) perbankan terhadap jumlah penduduk dewasa (usia di atas 15 tahun)[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $\frac{Total~rekening~DPK~perbankan}{Total~penduduk~dewasa}$[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Otoritas Jasa Keuangan / Bank Indonesia[cite: 1].</div>", unsafe_allow_html=True)
+                with st.expander("07. Indikator 3.3.2: Rasio Kredit Perbankan UMKM"):
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Perbandingan antara jumlah rekening kredit perbankan yang disalurkan untuk pembiayaan kegiatan UMKM terhadap total rekening kredit perbankan seluruhnya[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $\frac{Jumlah~rekening~kredit~UMKM}{Total~rekening~kredit~perbankan}$[cite: 1].</div>", unsafe_allow_html=True)
+                    st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Otoritas Jasa Keuangan / Bank Indonesia[cite: 1].</div>", unsafe_allow_html=True)
 
-            with st.expander("02. Indikator 2.1.2: Sumbangan Pendapatan Perempuan"):
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Indikator yang menggambarkan seberapa besar diskriminasi upah yang terjadi antara laki-laki dan perempuan[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $X=AK_{f}\times Rasio~W_{f}$[cite: 1]. Dihitung dari proporsi angkatan kerja perempuan dikalikan rasio upah perempuan terhadap rata-rata upah[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik (Sakernas)[cite: 1].</div>", unsafe_allow_html=True)
+        with col_kanan:
+            if pilihan_pilar == "Pilar 1: Pertumbuhan & Perkembangan Ekonomi": nama_file_gambar = "Pilar 1.png"
+            elif pilihan_pilar == "Pilar 2: Pemerataan Pendapatan & Kemiskinan": nama_file_gambar = "Pilar 2.png"
+            else: nama_file_gambar = "Pilar 3.png"
 
-            with st.expander("03. Indikator 2.1.3: Rasio Rata-rata Pengeluaran Rumah Tangga Desa & Kota"):
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Menunjukkan perbandingan rata-rata pengeluaran rumah tangga pedesaan terhadap rumah tangga perkotaan, yang menggambarkan disparitas wilayah[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $\frac{rata-rata~pengeluaran~penduduk~desa}{rata-rata~pengeluaran~penduduk~kota}$[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik (Susenas)[cite: 1].</div>", unsafe_allow_html=True)
+            try:
+                import base64
+                with open(nama_file_gambar, "rb") as img_file:
+                    encoded_img = base64.b64encode(img_file.read()).decode()
+                st.markdown(f'''
+                <div class="sticky-right-container">
+                    <img src="data:image/png;base64,{encoded_img}" class="floating-meta-img" alt="{nama_file_gambar}">
+                </div>
+                ''', unsafe_allow_html=True)
+            except FileNotFoundError:
+                st.warning(f"⚠️ File '{nama_file_gambar}' tidak ditemukan.")
 
-            st.markdown("<br><h4 style='color: #0ea5e9; font-weight: 700; margin-bottom: 10px;'>Sub-Pilar 2.2: Kemiskinan</h4>", unsafe_allow_html=True)
-            with st.expander("04. Indikator 2.2.1: Persentase Penduduk Miskin"):
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Persentase penduduk miskin merupakan jumlah orang yang hidup di bawah garis kemiskinan per kapita per bulan[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $\frac{Jumlah~penduduk~miskin}{Jumlah~penduduk}\times100\%$[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik (Susenas)[cite: 1].</div>", unsafe_allow_html=True)
+    # --- BAGIAN 2: TABEL DATA DINAMIS (ALA BPS) ---
+    with subtab_tabel:
+        st.markdown("<h2 style='color: #083c6b; font-weight: 800; margin-bottom: 5px; margin-top: 10px;'>Tabel Dinamis IPEI</h2>", unsafe_allow_html=True)
+        st.markdown("<p style='color: #64748b; margin-bottom: 25px;'>Gunakan fitur ini untuk mengekstrak dan mengunduh data mentah (*raw data*) berdasarkan indikator, tahun, dan wilayah spesifik.</p>", unsafe_allow_html=True)
+        
+        # Penyiapan Dictionary Indikator untuk Download
+        dict_unduh_ind = {
+            "Skor Total IPEI": "ipei", "Pilar 1: Pertumbuhan & Perkembangan": "pilar1", "Pilar 2: Kesetaraan & Inklusi": "pilar2", "Pilar 3: Kemiskinan & Pekerjaan": "pilar3",
+            "Sub 1.1: Pertumbuhan Ekonomi": "sp11", "Sub 1.2: Kesempatan Kerja": "sp12", "Sub 1.3: Infrastruktur": "sp13",
+            "Sub 2.1: Ketimpangan": "sp21", "Sub 2.2: Kemiskinan": "sp22",
+            "Sub 3.1: Kapabilitas Manusia": "sp31", "Sub 3.2: Infrastruktur Dasar": "sp32", "Sub 3.3: Keuangan Inklusif": "sp33"
+        }
 
-            with st.expander("05. Indikator 2.2.2: Rata-rata Konsumsi Protein per kapita per hari"):
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Jumlah konsumsi protein dari komoditi pangan yang dikonsumsi penduduk di satu wilayah secara rata-rata[cite: 1]. Menunjukkan perbaikan kesejahteraan[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $\frac{Jumlah~konsumsi~protein}{Jumlah~penduduk}$[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik (Susenas)[cite: 1].</div>", unsafe_allow_html=True)
+        # 1. Pilihan Indikator
+        st.markdown("**Pilih Tabel / Indikator (Bisa lebih dari 1):**")
+        indikator_terpilih = st.multiselect("Indikator", list(dict_unduh_ind.keys()), default=["Skor Total IPEI"], label_visibility="collapsed")
+        
+        st.write("") # Spacer
 
-        elif pilihan_pilar == "Pilar 3: Perluasan Akses & Kesempatan":
-            st.markdown("<h4 style='color: #0ea5e9; font-weight: 700; margin-bottom: 10px;'>Sub-Pilar 3.1: Kapabilitas Manusia</h4>", unsafe_allow_html=True)
-            with st.expander("01. Indikator 3.1.1: Angka Harapan Lama Sekolah"):
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Lamanya sekolah yang diharapkan akan dirasakan oleh anak pada umur tertentu (7 tahun ke atas) di masa mendatang[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $HLS_{a}^{t}=FK\times\Sigma_{i=a}^{n}\frac{E_{i}^{c}}{P_{i}^{t}}$[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik (Susenas)[cite: 1].</div>", unsafe_allow_html=True)
-
-            with st.expander("02. Indikator 3.1.2: Persentase Balita Mendapatkan Imunisasi Dasar Lengkap"):
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Menggambarkan tingkat pelayanan imunisasi dasar lengkap (DPT, polio, BCG, campak) pada balita di bawah usia 5 tahun[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $\frac{Jumlah~balita~dengan~imunisasi~dasar~lengkap}{Jumlah~anak~usia<5~tahun}\times100\%$[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik (Susenas / Riskesdas)[cite: 1].</div>", unsafe_allow_html=True)
-
-            with st.expander("03. Indikator 3.1.3: Persentase Penduduk yang Memiliki Jaminan Kesehatan"):
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Besaran cakupan jaminan kesehatan pada masyarakat yang bersifat sebagai jaring pengaman ketika mengalami kendala kesehatan[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $\frac{Jumlah~Penduduk~yang~Memiliki~Jaminan~Kesehatan}{Jumlah~Penduduk}\times100\%$[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik (Susenas)[cite: 1].</div>", unsafe_allow_html=True)
-
-            st.markdown("<br><h4 style='color: #0ea5e9; font-weight: 700; margin-bottom: 10px;'>Sub-Pilar 3.2: Infrastruktur Dasar</h4>", unsafe_allow_html=True)
-            with st.expander("04. Indikator 3.2.1: Persentase Rumah Tangga dengan Sumber Air Minum Layak"):
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Proporsi rumah tangga dengan akses berkelanjutan terhadap air minum berkualitas/layak dibandingkan rumah tangga seluruhnya[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $\frac{Rumah~Tangga~dengan~air~minum~layak}{Rumah~tangga~seluruhnya}\times100\%$[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik (Susenas)[cite: 1].</div>", unsafe_allow_html=True)
-
-            with st.expander("05. Indikator 3.2.2: Rumah Tangga dengan Fasilitas Tempat Buang Air Sendiri"):
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Proporsi rumah tangga memiliki fasilitas buang air sendiri (jamban/toilet) sebagai salah satu syarat sanitasi yang layak[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $\frac{Rumah~Tangga~dengan~fasilitas~buang~air~sendiri}{Rumah~tangga~seluruhnya}\times100\%$[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Badan Pusat Statistik (Susenas)[cite: 1].</div>", unsafe_allow_html=True)
-
-            st.markdown("<br><h4 style='color: #0ea5e9; font-weight: 700; margin-bottom: 10px;'>Sub-Pilar 3.3: Keuangan Inklusif</h4>", unsafe_allow_html=True)
-            with st.expander("06. Indikator 3.3.1: Rasio Jumlah Rekening DPK terhadap Penduduk Usia Produktif"):
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Pembagian jumlah total rekening Dana Pihak Ketiga (DPK) perbankan terhadap jumlah penduduk dewasa (usia di atas 15 tahun)[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $\frac{Total~rekening~DPK~perbankan}{Total~penduduk~dewasa}$[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Otoritas Jasa Keuangan / Bank Indonesia[cite: 1].</div>", unsafe_allow_html=True)
-
-            with st.expander("07. Indikator 3.3.2: Rasio Kredit Perbankan UMKM"):
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Konsep</span> Perbandingan antara jumlah rekening kredit perbankan yang disalurkan untuk pembiayaan kegiatan UMKM terhadap total rekening kredit perbankan seluruhnya[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Metode</span> $\frac{Jumlah~rekening~kredit~UMKM}{Total~rekening~kredit~perbankan}$[cite: 1].</div>", unsafe_allow_html=True)
-                st.markdown(r"<div class='meta-desc'><span class='meta-badge'>Sumber</span> Otoritas Jasa Keuangan / Bank Indonesia[cite: 1].</div>", unsafe_allow_html=True)
-
-    with col_kanan:
-        # 4. Rendering Gambar Dinamis dengan Sticky Behavior
-        # File gambar dinamakan sesuai pilar: Pilar 1.png, Pilar 2.png, Pilar 3.png
-        if pilihan_pilar == "Pilar 1: Pertumbuhan & Perkembangan Ekonomi":
-            nama_file_gambar = "Pilar 1.png"
-        elif pilihan_pilar == "Pilar 2: Pemerataan Pendapatan & Kemiskinan":
-            nama_file_gambar = "Pilar 2.png"
-        else:
-            nama_file_gambar = "Pilar 3.png"
-
-        try:
-            with open(nama_file_gambar, "rb") as img_file:
-                encoded_img = base64.b64encode(img_file.read()).decode()
+        # Layout Kolom untuk Wilayah (Kiri) dan Tahun (Kanan)
+        col_wil, col_thn = st.columns([2, 1], gap="large")
+        
+        with col_thn:
+            st.markdown("<div style='background-color: #f8fafc; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0;'>", unsafe_allow_html=True)
+            st.markdown("**📅 Tahun**")
+            pilih_semua_thn = st.checkbox("Pilih Semua Tahun", value=True)
+            daftar_tahun = [2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016, 2015, 2014, 2013, 2012, 2011]
             
-            st.markdown(f'''
-            <div class="sticky-right-container">
-                <img src="data:image/png;base64,{encoded_img}" class="floating-meta-img" alt="{nama_file_gambar}">
-            </div>
-            ''', unsafe_allow_html=True)
-        except FileNotFoundError:
-            st.warning(f"⚠️ File '{nama_file_gambar}' tidak ditemukan di folder. Pastikan penamaan file sudah persis sama.")
+            if pilih_semua_thn:
+                tahun_terpilih = st.multiselect("Tahun", daftar_tahun, default=daftar_tahun, disabled=True, label_visibility="collapsed")
+                tahun_terpilih = daftar_tahun
+            else:
+                tahun_terpilih = st.multiselect("Tahun", daftar_tahun, default=[2025], label_visibility="collapsed")
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        with col_wil:
+            st.markdown("<div style='background-color: #f8fafc; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0;'>", unsafe_allow_html=True)
+            st.markdown("**📍 Wilayah (Judul Baris)**")
+            
+            # Membuat container dengan scroll (Ketinggian tetap)
+            with st.container(height=350):
+                wilayah_final_prov = []
+                wilayah_final_kab = []
+                
+                # Membangun struktur Pohon Checkbox (Menjorok/Indented)
+                df_kabkota['nama_provinsi_map'] = df_kabkota['kodedaerah'].str[:2] + '00'
+                df_kabkota['nama_provinsi_map'] = df_kabkota['nama_provinsi_map'].map(dict(zip(df_provinsi['kodedaerah'].str[:2] + '00', df_provinsi['namadaerah'])))
+                
+                for prov in sorted(df_provinsi['namadaerah'].dropna().unique()):
+                    # Checkbox Provinsi (Huruf Tebal)
+                    cek_prov = st.checkbox(f"**{prov}**", key=f"tabel_prov_{prov}", value=True)
+                    if cek_prov:
+                        wilayah_final_prov.append(prov)
+                    
+                    # Expander untuk Kab/Kota di bawah provinsi tersebut
+                    kabs_list = sorted(df_kabkota[df_kabkota['nama_provinsi_map'] == prov]['namadaerah'].dropna().unique())
+                    if len(kabs_list) > 0:
+                        with st.expander(f"↳ Tampilkan Kab/Kota di {prov}"):
+                            # Cek Semua Kab/Kota di Provinsi ini
+                            cek_semua_kab = st.checkbox(f"Pilih Semua Kab/Kota di {prov}", key=f"all_kab_{prov}")
+                            
+                            for kab in kabs_list:
+                                # Desain sedikit menjorok
+                                st.markdown("&nbsp;&nbsp;&nbsp;&nbsp;", unsafe_allow_html=True)
+                                # Jika "Pilih Semua" dicentang, maka default anak centangnya True
+                                cek_kab = st.checkbox(f"{kab}", value=cek_semua_kab, key=f"tabel_kab_{kab}")
+                                if cek_kab:
+                                    wilayah_final_kab.append(kab)
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown("<hr style='margin: 30px 0;'>", unsafe_allow_html=True)
+        
+        # Logika Penarikan Data (Data Ekstraktor)
+        if st.button("🔄 Ekstrak & Tampilkan Tabel", type="primary"):
+            if not indikator_terpilih or not tahun_terpilih or (not wilayah_final_prov and not wilayah_final_kab):
+                st.error("⚠️ Silakan pilih minimal 1 Indikator, 1 Tahun, dan 1 Wilayah.")
+            else:
+                # Filter Data Provinsi
+                df_p = df_provinsi[df_provinsi['tahun'].isin(tahun_terpilih)]
+                df_p = df_p[df_p['namadaerah'].isin(wilayah_final_prov)].copy()
+                if not df_p.empty: df_p['Tingkat Wilayah'] = 'Provinsi'
+                
+                # Filter Data Kabupaten
+                df_k = df_kabkota[df_kabkota['tahun'].isin(tahun_terpilih)]
+                df_k = df_k[df_k['namadaerah'].isin(wilayah_final_kab)].copy()
+                if not df_k.empty: df_k['Tingkat Wilayah'] = 'Kabupaten/Kota'
+                
+                # Menggabungkan Data
+                df_gabungan = pd.concat([df_p, df_k], ignore_index=True)
+                
+                if df_gabungan.empty:
+                    st.warning("Data tidak ditemukan berdasarkan filter yang dipilih.")
+                else:
+                    # Memilah Kolom
+                    kolom_identitas = ['tahun', 'kodedaerah', 'namadaerah', 'Tingkat Wilayah']
+                    kolom_nilai = [dict_unduh_ind[ind] for ind in indikator_terpilih]
+                    
+                    df_tampil = df_gabungan[kolom_identitas + kolom_nilai].copy()
+                    
+                    # Ubah nama kolom (Alias) agar lebih mudah dibaca di Excel
+                    rename_dict = {dict_unduh_ind[k]: k for k in indikator_terpilih}
+                    rename_dict.update({'tahun': 'Tahun', 'kodedaerah': 'Kode Daerah', 'namadaerah': 'Nama Daerah'})
+                    df_tampil.rename(columns=rename_dict, inplace=True)
+                    
+                    st.success("✅ Tabel berhasil diekstrak!")
+                    st.dataframe(df_tampil, use_container_width=True)
+                    
+                    # Tombol Download (Mengekspor dataframe yang sedang tampil ke CSV)
+                    csv_tabel = df_tampil.to_csv(index=False).encode('utf-8')
+                    st.download_button(
+                        label="⬇️ Unduh Data (CSV)",
+                        data=csv_tabel,
+                        file_name="Tabel_Dinamis_IPEI.csv",
+                        mime='text/csv'
+                    )
 
