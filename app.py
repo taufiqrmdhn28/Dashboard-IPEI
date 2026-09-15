@@ -809,7 +809,7 @@ with tab_metadata:
                 st.warning(f"⚠️ File '{nama_file_gambar}' tidak ditemukan.")
 
     # --- BAGIAN 2: TABEL DATA DINAMIS (ALA BPS) ---
-    with subtab_tabel:
+   with subtab_tabel:
         st.markdown("<h2 style='color: #083c6b; font-weight: 800; margin-bottom: 5px; margin-top: 10px;'>Tabel Dinamis IPEI</h2>", unsafe_allow_html=True)
         st.markdown("<p style='color: #64748b; margin-bottom: 25px;'>Gunakan fitur ini untuk mengekstrak dan mengunduh data mentah (*raw data*) berdasarkan indikator, tahun, dan wilayah spesifik.</p>", unsafe_allow_html=True)
         
@@ -821,9 +821,9 @@ with tab_metadata:
             "Sub 3.1: Kapabilitas Manusia": "sp31", "Sub 3.2: Infrastruktur Dasar": "sp32", "Sub 3.3: Keuangan Inklusif": "sp33"
         }
 
-        # 1. Pilihan Indikator
+        # 1. Pilihan Indikator (Default Kosong)
         st.markdown("**Pilih Tabel / Indikator (Bisa lebih dari 1):**")
-        indikator_terpilih = st.multiselect("Indikator", list(dict_unduh_ind.keys()), default=["Skor Total IPEI"], label_visibility="collapsed")
+        indikator_terpilih = st.multiselect("Indikator", list(dict_unduh_ind.keys()), default=[], label_visibility="collapsed")
         
         st.write("") # Spacer
 
@@ -833,14 +833,16 @@ with tab_metadata:
         with col_thn:
             st.markdown("<div style='background-color: #f8fafc; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0;'>", unsafe_allow_html=True)
             st.markdown("**📅 Tahun**")
-            pilih_semua_thn = st.checkbox("Pilih Semua Tahun", value=True)
+            # Default pilihan semua tahun tidak dicentang
+            pilih_semua_thn = st.checkbox("Pilih Semua Tahun", value=False)
             daftar_tahun = [2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016, 2015, 2014, 2013, 2012, 2011]
             
             if pilih_semua_thn:
                 tahun_terpilih = st.multiselect("Tahun", daftar_tahun, default=daftar_tahun, disabled=True, label_visibility="collapsed")
                 tahun_terpilih = daftar_tahun
             else:
-                tahun_terpilih = st.multiselect("Tahun", daftar_tahun, default=[2025], label_visibility="collapsed")
+                # Default pilihan tahun spesifik kosong
+                tahun_terpilih = st.multiselect("Tahun", daftar_tahun, default=[], label_visibility="collapsed")
             st.markdown("</div>", unsafe_allow_html=True)
 
         with col_wil:
@@ -857,8 +859,8 @@ with tab_metadata:
                 df_kabkota['nama_provinsi_map'] = df_kabkota['nama_provinsi_map'].map(dict(zip(df_provinsi['kodedaerah'].str[:2] + '00', df_provinsi['namadaerah'])))
                 
                 for prov in sorted(df_provinsi['namadaerah'].dropna().unique()):
-                    # Checkbox Provinsi (Huruf Tebal)
-                    cek_prov = st.checkbox(f"**{prov}**", key=f"tabel_prov_{prov}", value=True)
+                    # Checkbox Provinsi (Huruf Tebal) - Default Tidak Dicentang (value=False)
+                    cek_prov = st.checkbox(f"**{prov}**", key=f"tabel_prov_{prov}", value=False)
                     if cek_prov:
                         wilayah_final_prov.append(prov)
                     
@@ -866,13 +868,13 @@ with tab_metadata:
                     kabs_list = sorted(df_kabkota[df_kabkota['nama_provinsi_map'] == prov]['namadaerah'].dropna().unique())
                     if len(kabs_list) > 0:
                         with st.expander(f"↳ Tampilkan Kab/Kota di {prov}"):
-                            # Cek Semua Kab/Kota di Provinsi ini
-                            cek_semua_kab = st.checkbox(f"Pilih Semua Kab/Kota di {prov}", key=f"all_kab_{prov}")
+                            # Cek Semua Kab/Kota di Provinsi ini - Default Tidak Dicentang
+                            cek_semua_kab = st.checkbox(f"Pilih Semua Kab/Kota di {prov}", key=f"all_kab_{prov}", value=False)
                             
                             for kab in kabs_list:
                                 # Desain sedikit menjorok
                                 st.markdown("&nbsp;&nbsp;&nbsp;&nbsp;", unsafe_allow_html=True)
-                                # Jika "Pilih Semua" dicentang, maka default anak centangnya True
+                                # Jika "Pilih Semua" dicentang, maka default anak centangnya True, jika tidak mengikuti default awal
                                 cek_kab = st.checkbox(f"{kab}", value=cek_semua_kab, key=f"tabel_kab_{kab}")
                                 if cek_kab:
                                     wilayah_final_kab.append(kab)
@@ -883,7 +885,7 @@ with tab_metadata:
         # Logika Penarikan Data (Data Ekstraktor)
         if st.button("🔄 Ekstrak & Tampilkan Tabel", type="primary"):
             if not indikator_terpilih or not tahun_terpilih or (not wilayah_final_prov and not wilayah_final_kab):
-                st.error("⚠️ Silakan pilih minimal 1 Indikator, 1 Tahun, dan 1 Wilayah.")
+                st.error("⚠️ Silakan pilih minimal 1 Indikator, 1 Tahun, dan 1 Wilayah terlebih dahulu.")
             else:
                 # Filter Data Provinsi
                 df_p = df_provinsi[df_provinsi['tahun'].isin(tahun_terpilih)]
